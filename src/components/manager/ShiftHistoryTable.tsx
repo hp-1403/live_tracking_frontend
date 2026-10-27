@@ -21,10 +21,22 @@ export const ShiftHistoryTable: React.FC<ShiftHistoryTableProps> = ({ shifts }) 
   });
 
   const formatDuration = (seconds?: number) => {
-    if (!seconds) return '0h 0m';
+    if (seconds === undefined || seconds === null || isNaN(seconds)) return '0h 0m';
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     return `${h}h ${m}m`;
+  };
+
+  const formatDateSafe = (iso?: string) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString();
+  };
+
+  const formatTimeSafe = (iso?: string) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -78,15 +90,13 @@ export const ShiftHistoryTable: React.FC<ShiftHistoryTableProps> = ({ shifts }) 
                   <td className="py-3.5 text-slate-300">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-                      {new Date(shift.startedAt).toLocaleDateString()}
+                      {formatDateSafe(shift.startedAt)}
                     </span>
                   </td>
                   <td className="py-3.5 font-mono text-slate-300">
-                    {new Date(shift.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {formatTimeSafe(shift.startedAt)}
                     {' - '}
-                    {shift.endedAt
-                      ? new Date(shift.endedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : 'Active'}
+                    {shift.endedAt ? formatTimeSafe(shift.endedAt) : 'Active'}
                   </td>
                   <td className="py-3.5 font-mono text-slate-200">
                     {formatDuration(shift.totalDurationSeconds)}

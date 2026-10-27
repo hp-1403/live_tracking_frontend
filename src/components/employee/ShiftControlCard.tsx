@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Square, Clock, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Play, Pause, Square, AlertCircle } from 'lucide-react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
@@ -28,31 +28,57 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
 
   // Timer calculation
   useEffect(() => {
-    if (!shift || shift.status !== 'active') return;
+    if (!shift) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const rawStartTime = shift.startedAt || (shift as any)?.started_at;
+    const parsedStart = rawStartTime ? new Date(rawStartTime).getTime() : NaN;
+    const validStartTime = !isNaN(parsedStart) ? parsedStart : Date.now();
 
     const calculateElapsed = () => {
-      const startTime = new Date(shift.startedAt).getTime();
+      if (shift.status === 'paused' && shift.totalDurationSeconds !== undefined && shift.totalDurationSeconds > 0) {
+        setElapsedSeconds(shift.totalDurationSeconds);
+        return;
+      }
+
       const now = Date.now();
-      const elapsed = Math.max(0, Math.floor((now - startTime) / 1000));
-      setElapsedSeconds(elapsed);
+      const diff = Math.max(0, Math.floor((now - validStartTime) / 1000));
+      setElapsedSeconds(isNaN(diff) ? 0 : diff);
     };
 
     calculateElapsed();
-    const interval = setInterval(calculateElapsed, 1000);
-    return () => clearInterval(interval);
+
+    if (shift.status === 'active') {
+      const interval = setInterval(calculateElapsed, 1000);
+      return () => clearInterval(interval);
+    }
   }, [shift]);
 
   const formatTime = (totalSecs: number) => {
-    const hours = Math.floor(totalSecs / 3600);
-    const minutes = Math.floor((totalSecs % 3600) / 60);
-    const seconds = totalSecs % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes
+    const validSecs = isNaN(totalSecs) || totalSecs < 0 ? 0 : Math.floor(totalSecs);
+    const hours = Math.floor(validSecs / 3600);
+    const minutes = Math.floor((validSecs % 3600) / 60);
+    const seconds = validSecs % 60;
+    return `${hours.toString().padStart(2, '0')} : ${minutes
       .toString()
-      .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      .padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const getStartTimeLabel = () => {
+    if (!shift) {
+      return 'Clock in to start activity logging and live screen/webcam broadcasting to management.';
+    }
+    const raw = shift.startedAt || (shift as any)?.started_at;
+    const date = raw ? new Date(raw) : null;
+    if (date && !isNaN(date.getTime())) {
+      return `Shift started at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    return 'Shift currently in progress';
   };
 
   const isShiftActive = Boolean(shift && shift.status === 'active');
-  const isShiftPaused = Boolean(shift && shift.status === 'paused');
 
   return (
     <Card glow={isShiftActive} className="relative overflow-hidden">
@@ -67,11 +93,7 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
               <Badge status="offline" label="Not Clocked In" />
             )}
           </div>
-          <p className="text-sm text-slate-400">
-            {shift
-              ? `Shift started at ${new Date(shift.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : 'Clock in to start activity logging and live screen/webcam broadcasting to management.'}
-          </p>
+          <p className="text-sm text-slate-400">{getStartTimeLabel()}</p>
 
           {/* Large Clock Display */}
           <div className="mt-4 flex items-baseline gap-3">

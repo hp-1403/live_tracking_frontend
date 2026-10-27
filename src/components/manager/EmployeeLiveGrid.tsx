@@ -33,7 +33,13 @@ export const EmployeeLiveGrid: React.FC<EmployeeLiveGridProps> = ({
       {employees.map((emp) => {
         const matchingShift = activeShifts.find((s) => s.employeeId === emp.employeeId);
         const shiftStartTime = matchingShift
-          ? new Date(matchingShift.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          ? (() => {
+              const raw = matchingShift.startedAt || (matchingShift as any)?.started_at;
+              const d = raw ? new Date(raw) : null;
+              return d && !isNaN(d.getTime())
+                ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : null;
+            })()
           : null;
 
         return (

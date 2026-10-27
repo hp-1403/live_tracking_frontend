@@ -9,13 +9,44 @@ export const shiftQueryKeys = {
   history: () => [...shiftQueryKeys.all, 'history'] as const,
 };
 
+/**
+ * Normalizes any incoming shift object, ensuring proper field mapping and valid dates.
+ */
+export const normalizeShift = (raw: any): Shift | null => {
+  if (!raw) return null;
+  return {
+    ...raw,
+    id: raw.id,
+    employeeId: raw.employeeId || raw.employee_id,
+    startedAt: raw.startedAt || raw.started_at || new Date().toISOString(),
+    endedAt: raw.endedAt || raw.ended_at || null,
+    status: raw.status,
+    totalDurationSeconds:
+      raw.totalDurationSeconds !== undefined
+        ? Number(raw.totalDurationSeconds)
+        : raw.total_duration_seconds !== undefined
+        ? Number(raw.total_duration_seconds)
+        : 0,
+    idleDurationSeconds:
+      raw.idleDurationSeconds !== undefined
+        ? Number(raw.idleDurationSeconds)
+        : raw.idle_duration_seconds !== undefined
+        ? Number(raw.idle_duration_seconds)
+        : 0,
+    livekitRoomName: raw.livekitRoomName || raw.livekit_room_name,
+    employeeName:
+      raw.employeeName || raw.employee_name || raw.fullName || raw.full_name || 'Employee',
+    employeeEmail: raw.employeeEmail || raw.employee_email || raw.email,
+  };
+};
+
 // 1. Get current employee's active shift
 export const useMyActiveShiftQuery = (enabled = true) => {
   return useQuery({
     queryKey: shiftQueryKeys.myActive(),
     queryFn: async () => {
       const res = await api.getMyActiveShift();
-      return res.shift as Shift | null;
+      return normalizeShift(res.shift);
     },
     enabled,
     refetchInterval: 1000 * 30, // Background sync every 30s
@@ -29,7 +60,7 @@ export const useStartShiftMutation = () => {
   return useMutation({
     mutationFn: async () => {
       const res = await api.startShift();
-      return res.shift as Shift;
+      return normalizeShift(res.shift) as Shift;
     },
     onSuccess: (newShift) => {
       queryClient.setQueryData(shiftQueryKeys.myActive(), newShift);
@@ -54,7 +85,7 @@ export const useUpdateShiftStatusMutation = () => {
       idleSecondsDelta?: number;
     }) => {
       const res = await api.updateShiftStatus(shiftId, status, idleSecondsDelta);
-      return res.shift as Shift;
+      return normalizeShift(res.shift) as Shift;
     },
     onSuccess: (updatedShift) => {
       if (updatedShift.status === 'completed') {
@@ -74,7 +105,7 @@ export const useAllActiveShiftsQuery = (enabled = true) => {
     queryKey: shiftQueryKeys.activeAll(),
     queryFn: async () => {
       const res = await api.getAllActiveShifts();
-      return (res.shifts || []) as Shift[];
+      return (res.shifts || []).map(normalizeShift).filter(Boolean) as Shift[];
     },
     enabled,
     refetchInterval: 1000 * 15, // Polling fallback alongside WebSockets
@@ -87,7 +118,7 @@ export const useShiftHistoryQuery = (enabled = true) => {
     queryKey: shiftQueryKeys.history(),
     queryFn: async () => {
       const res = await api.getShiftHistory();
-      return (res.shifts || []) as Shift[];
+      return (res.shifts || []).map(normalizeShift).filter(Boolean) as Shift[];
     },
     enabled,
   });
