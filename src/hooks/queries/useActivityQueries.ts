@@ -35,3 +35,15 @@ export const useShiftActivityLogsQuery = (shiftId?: string) => {
     enabled: !!shiftId,
   });
 };
+
+// 3. Get Auth & Shift Audit Logs (Logins, Logouts, Auto-starts, Auto-pauses)
+export const useAuditLogsQuery = () => {
+  return useQuery({
+    queryKey: ['audit-logs'],
+    queryFn: async () => {
+      const res = await api.getAuditLogs();
+      return (res.logs || []) as any[];
+    },
+    refetchInterval: 10000,
+  });
+};

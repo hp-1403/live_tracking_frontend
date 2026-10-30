@@ -6,8 +6,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (credentials: { email: string; password: string }) => Promise<User>;
-  register: (payload: { fullName: string; email: string; password: string; role: 'employee' | 'manager' }) => Promise<User>;
+  login: (credentials: { employeeId: string; name: string }) => Promise<User>;
+  register: (payload: { fullName: string; role?: 'employee' | 'manager'; email?: string }) => Promise<{ user: User; employeeId: string }>;
   logout: () => void;
   isAuthenticated: boolean;
   isManager: boolean;
@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  const login = async (credentials: { email: string; password: string }) => {
+  const login = async (credentials: { employeeId: string; name: string }) => {
     setIsLoading(true);
     try {
       const response = await api.login(credentials);
@@ -59,24 +59,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (payload: {
     fullName: string;
-    email: string;
-    password: string;
-    role: 'employee' | 'manager';
+    role?: 'employee' | 'manager';
+    email?: string;
   }) => {
     setIsLoading(true);
     try {
       const response = await api.register(payload);
+      const generatedId = response.employee?.employeeId || response.user?.employeeId;
       setUser(response.user);
       setToken(response.token);
       setAuthToken(response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-      return response.user;
+      return { user: response.user, employeeId: generatedId };
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = () => {
+    if (user) {
+      api.logout({ userId: user.id, employeeId: user.employeeId }).catch(() => {});
+    } else {
+      api.logout().catch(() => {});
+    }
     setUser(null);
     setToken(null);
     clearAuthToken();
