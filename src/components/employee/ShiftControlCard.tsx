@@ -83,31 +83,31 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
 
   return (
     <Card glow={isShiftActive} className="relative overflow-hidden">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
         {/* Left: Shift Information & Timer */}
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-xl font-bold text-slate-900">Work Shift Tracker</h3>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
+            <h3 className="text-lg sm:text-xl 2xl:text-2xl font-bold text-slate-900">Work Shift Tracker</h3>
             <Badge status={shift ? shift.status : 'active'} />
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] sm:text-[11px] 2xl:text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
               <Sparkles className="w-3 h-3 text-indigo-600" /> Auto-Started at Login
             </span>
           </div>
-          <p className="text-sm text-slate-500">{getStartTimeLabel()}</p>
+          <p className="text-xs sm:text-sm 2xl:text-base text-slate-500">{getStartTimeLabel()}</p>
 
           {/* Large Clock Display */}
-          <div className="mt-4 flex items-baseline gap-3">
-            <div className="font-mono text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-700 to-indigo-500 bg-clip-text text-transparent">
+          <div className="mt-3 sm:mt-4 flex flex-wrap items-baseline gap-2.5 sm:gap-3">
+            <div className="font-mono text-3xl sm:text-4xl lg:text-5xl 2xl:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-700 to-indigo-500 bg-clip-text text-transparent">
               {formatTime(elapsedSeconds)}
             </div>
-            <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+            <span className="text-[10px] sm:text-xs 2xl:text-sm text-slate-500 uppercase tracking-wider font-semibold">
               {isShiftPaused ? 'Shift Paused' : 'Elapsed Active Time'}
             </span>
           </div>
         </div>
 
         {/* Right: Shift Action Controls */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
           {isShiftActive ? (
             <Button
               variant="outline"
@@ -115,6 +115,7 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
               onClick={onPauseShift}
               isLoading={isLoading}
               icon={<Pause className="w-4 h-4" />}
+              className="w-full sm:w-auto text-xs sm:text-sm 2xl:text-base"
             >
               Take Break (Pause)
             </Button>
@@ -125,6 +126,7 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
               onClick={onResumeShift}
               isLoading={isLoading}
               icon={<Play className="w-4 h-4 fill-current" />}
+              className="w-full sm:w-auto text-xs sm:text-sm 2xl:text-base"
             >
               Resume Shift
             </Button>
@@ -136,6 +138,7 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
             onClick={onLogout}
             isLoading={isLoading}
             icon={<LogOut className="w-4 h-4" />}
+            className="w-full sm:w-auto text-xs sm:text-sm 2xl:text-base"
           >
             Clock Out &amp; Logout
           </Button>
@@ -144,9 +147,9 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
 
       {/* Auto-Paused Due to Inactivity Banner */}
       {isShiftPaused && isAutoPaused && (
-        <div className="mt-6 flex items-center justify-between p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium animate-fadeIn">
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600" />
+        <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs 2xl:text-sm font-medium animate-fadeIn">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600 mt-0.5 sm:mt-0" />
             <span>
               <strong>Shift Auto-Paused:</strong> You were inactive for 3 minutes. Your shift timer has been paused to protect your work duration logs. Click <strong>Resume Shift</strong> to continue working.
             </span>
@@ -156,7 +159,7 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
             size="sm"
             onClick={onResumeShift}
             isLoading={isLoading}
-            className="ml-3 flex-shrink-0"
+            className="flex-shrink-0 self-stretch sm:self-auto text-xs 2xl:text-sm"
           >
             Resume Now
           </Button>
@@ -165,8 +168,8 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
 
       {/* Compliance / Streaming Alert */}
       {isShiftActive && !isStreaming && (
-        <div className="mt-6 flex items-center gap-3 p-3.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-xs font-medium">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 text-indigo-600" />
+        <div className="mt-4 sm:mt-6 flex items-start sm:items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-xs 2xl:text-sm font-medium">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 text-indigo-600 mt-0.5 sm:mt-0" />
           <span>
             Notice: Screen or Webcam capture is not active. Please select a screen and allow webcam below to broadcast your live work feed.
           </span>

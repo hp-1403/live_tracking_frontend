@@ -79,92 +79,94 @@ export const AuthAuditLogTable: React.FC<AuthAuditLogTableProps> = ({ logs, isLo
   };
 
   return (
-    <Card className="mt-8">
+    <Card className="mt-6 sm:mt-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-lg font-bold text-slate-800">Database Audit Trail: Employee Login &amp; Logout Activity</h3>
+            <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+            <h3 className="text-base sm:text-lg 2xl:text-xl font-bold text-slate-800">Database Audit Trail: Employee Login &amp; Logout Activity</h3>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs 2xl:text-sm text-slate-500 mt-0.5">
             Full authoritative system log of every employee login, logout, automatic shift start, and auto-pause event.
           </p>
         </div>
 
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full sm:w-64 lg:w-72 2xl:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search employee or action..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-4 py-2 text-xs 2xl:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-slate-200 text-slate-500 uppercase font-semibold bg-slate-50/60">
-              <th className="py-2.5 pl-3">Timestamp</th>
-              <th className="py-2.5">Employee</th>
-              <th className="py-2.5">Event Action</th>
-              <th className="py-2.5">Event Details</th>
-              <th className="py-2.5 pr-3">IP Address</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {isLoading ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-slate-400">
-                  <div className="inline-flex items-center gap-2">
-                    <Clock className="w-4 h-4 animate-spin text-indigo-600" />
-                    <span>Loading audit records from database...</span>
-                  </div>
-                </td>
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+          <table className="min-w-full text-left text-xs 2xl:text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500 uppercase font-semibold bg-slate-50/60 text-[10px] sm:text-xs 2xl:text-sm">
+                <th className="py-2.5 sm:py-3 pl-3 pr-2 whitespace-nowrap">Timestamp</th>
+                <th className="py-2.5 sm:py-3 px-2 whitespace-nowrap">Employee</th>
+                <th className="py-2.5 sm:py-3 px-2 whitespace-nowrap">Event Action</th>
+                <th className="py-2.5 sm:py-3 px-2">Event Details</th>
+                <th className="py-2.5 sm:py-3 pr-3 pl-2 whitespace-nowrap">IP Address</th>
               </tr>
-            ) : filteredLogs.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-slate-400">
-                  No activity audit logs found yet.
-                </td>
-              </tr>
-            ) : (
-              filteredLogs.map((log, idx) => {
-                const empName = log.employee_name || log.employeeName || 'Employee';
-                const empId = log.employee_id || log.employeeId || 'ID';
-                const createdAt = log.created_at || log.createdAt;
-                const action = log.action;
-                const details = log.details || '-';
-                const ip = log.ip_address || log.ipAddress || '127.0.0.1';
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400 text-xs 2xl:text-sm">
+                    <div className="inline-flex items-center gap-2">
+                      <Clock className="w-4 h-4 animate-spin text-indigo-600" />
+                      <span>Loading audit records from database...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400 text-xs 2xl:text-sm">
+                    No activity audit logs found yet.
+                  </td>
+                </tr>
+              ) : (
+                filteredLogs.map((log, idx) => {
+                  const empName = log.employee_name || log.employeeName || 'Employee';
+                  const empId = log.employee_id || log.employeeId || 'ID';
+                  const createdAt = log.created_at || log.createdAt;
+                  const action = log.action;
+                  const details = log.details || '-';
+                  const ip = log.ip_address || log.ipAddress || '127.0.0.1';
 
-                return (
-                  <tr key={log.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 pl-3 font-mono text-slate-600 text-[11px] whitespace-nowrap">
-                      {formatTimestamp(createdAt)}
-                    </td>
-                    <td className="py-3.5">
-                      <div className="font-semibold text-slate-800">{empName}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">{empId}</div>
-                    </td>
-                    <td className="py-3.5">
-                      {getActionBadge(action)}
-                    </td>
-                    <td className="py-3.5 text-slate-600">
-                      {details}
-                    </td>
-                    <td className="py-3.5 pr-3 font-mono text-slate-500 text-[11px]">
-                      {ip}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                  return (
+                    <tr key={log.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 sm:py-3.5 pl-3 pr-2 font-mono text-slate-600 text-[10px] sm:text-[11px] 2xl:text-xs whitespace-nowrap">
+                        {formatTimestamp(createdAt)}
+                      </td>
+                      <td className="py-3 sm:py-3.5 px-2 whitespace-nowrap">
+                        <div className="font-semibold text-slate-800">{empName}</div>
+                        <div className="text-[10px] sm:text-xs text-slate-400 font-mono">{empId}</div>
+                      </td>
+                      <td className="py-3 sm:py-3.5 px-2 whitespace-nowrap">
+                        {getActionBadge(action)}
+                      </td>
+                      <td className="py-3 sm:py-3.5 px-2 text-slate-600 min-w-[180px]">
+                        {details}
+                      </td>
+                      <td className="py-3 sm:py-3.5 pr-3 pl-2 font-mono text-slate-500 text-[10px] sm:text-[11px] 2xl:text-xs whitespace-nowrap">
+                        {ip}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </Card>
   );

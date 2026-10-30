@@ -180,50 +180,50 @@ export const EmployeeDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-12 sm:pb-16 2xl:pb-24">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <main className="max-w-7xl 2xl:max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 pt-4 sm:pt-6 lg:pt-8 2xl:pt-10 space-y-4 sm:space-y-6 lg:space-y-8">
         {/* Cross-Tab Tracking Advisory Banner */}
         {!isCrossAppActive ? (
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/90 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
+          <div className="p-3.5 sm:p-4 2xl:p-5 rounded-2xl bg-amber-50 border border-amber-200/90 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-start gap-2.5 sm:gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-bold text-amber-900">
+                <h4 className="text-xs sm:text-sm 2xl:text-base font-bold text-amber-900">
                   Cross-Tab Activity Tracking Inactive
                 </h4>
-                <p className="text-xs text-amber-700 mt-0.5">
+                <p className="text-[11px] sm:text-xs 2xl:text-sm text-amber-700 mt-0.5">
                   Browsers strictly isolate tabs for security. To ensure your cursor and keyboard activity in <strong>other Chrome tabs and desktop apps</strong> reset your 3-minute timer, please share your screen or allow the idle API.
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0 w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row items-center gap-2 flex-shrink-0 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={startScreenShare}
-                className="flex-1 md:flex-initial py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center justify-center gap-2"
+                className="w-full sm:w-auto py-2 px-3.5 2xl:px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs 2xl:text-sm font-semibold shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Monitor className="w-4 h-4" /> Share Entire Screen
               </button>
               <button
                 type="button"
                 onClick={requestIdleDetectorPermission}
-                className="flex-1 md:flex-initial py-2 px-3 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-xl text-xs font-medium shadow-sm transition flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto py-2 px-3 2xl:px-4 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-xl text-xs 2xl:text-sm font-medium shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <ShieldCheck className="w-4 h-4 text-indigo-600" /> Allow Idle API
               </button>
             </div>
           </div>
         ) : (
-          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/80 shadow-sm flex items-center justify-between gap-3 text-xs text-emerald-900">
+          <div className="p-3 sm:p-3.5 2xl:p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 text-xs 2xl:text-sm text-emerald-900">
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
               <span>
                 <strong>Cross-Tab &amp; Desktop Activity Tracking Active:</strong> Your mouse and keyboard activity across all Chrome tabs and desktop applications are actively tracking.
               </span>
             </div>
-            <span className="font-semibold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full text-[11px] flex-shrink-0">
+            <span className="font-semibold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] 2xl:text-xs flex-shrink-0 self-start sm:self-auto">
               {isScreenMotionActive ? 'Screen Motion Active' : 'System Idle API Active'}
             </span>
           </div>
@@ -241,14 +241,14 @@ export const EmployeeDashboard: React.FC = () => {
         />
 
         {/* Dual Video Stream Preview & Activity Column */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Left 2 Cols: Main Live Video & Screen Sharing Feed */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Video className="w-5 h-5 text-indigo-600" /> Live Feed Broadcast Preview
+        <div className="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-6 sm:gap-8 2xl:gap-10 items-start">
+          {/* Main Live Video & Screen Sharing Feed: 2 cols on lg, 3 cols on 2xl */}
+          <div className="lg:col-span-2 2xl:col-span-3 space-y-3.5 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+              <h3 className="text-base sm:text-lg 2xl:text-xl font-bold text-slate-900 flex items-center gap-2">
+                <Video className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" /> Live Feed Broadcast Preview
               </h3>
-              <span className="text-xs text-slate-500 font-medium">
+              <span className="text-[11px] sm:text-xs 2xl:text-sm text-slate-500 font-medium">
                 Managers view this stream live
               </span>
             </div>
@@ -265,8 +265,8 @@ export const EmployeeDashboard: React.FC = () => {
             />
 
             {/* Privacy & Compliance Info */}
-            <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs text-indigo-950 flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 sm:p-4 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs 2xl:text-sm text-indigo-950 flex items-start gap-2.5 sm:gap-3">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
               <div>
                 <strong className="text-indigo-900">Shift Started Automatically:</strong> Your work shift began as soon as you logged in and is automatically tracking. When you log out, your shift will automatically complete and clock out.
               </div>
@@ -274,7 +274,7 @@ export const EmployeeDashboard: React.FC = () => {
           </div>
 
           {/* Right 1 Col: Activity Tracker Status */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 2xl:col-span-1 space-y-4 sm:space-y-6">
             <ActivityStatusWidget
               isIdle={isIdle}
               idleSeconds={idleSeconds}
@@ -287,10 +287,10 @@ export const EmployeeDashboard: React.FC = () => {
             />
 
             <Card>
-              <h4 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+              <h4 className="text-xs sm:text-sm 2xl:text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
                 <Info className="w-4 h-4 text-indigo-600" /> Inactivity Policy &amp; Shift Info
               </h4>
-              <ul className="text-xs text-slate-600 space-y-2 list-disc list-inside">
+              <ul className="text-xs 2xl:text-sm text-slate-600 space-y-1.5 sm:space-y-2 list-disc list-inside">
                 <li>
                   <strong>3-Minute Auto-Pause:</strong> If no activity is detected for 3 minutes, your shift is paused automatically to preserve accurate hours.
                 </li>
