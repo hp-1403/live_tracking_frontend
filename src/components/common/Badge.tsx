@@ -47,13 +47,13 @@ export const Badge: React.FC<BadgeProps> = ({ status, label, size = 'md' }) => {
   };
 
   const config = getBadgeConfig();
-  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs';
+  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[10px] sm:text-xs' : 'px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs 2xl:text-sm';
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-medium rounded-full border ${config.bg} ${sizeClasses}`}
+      className={`inline-flex items-center gap-1.5 font-medium rounded-full border whitespace-nowrap ${config.bg} ${sizeClasses}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${config.dot}`} />
       <span>{config.text}</span>
     </span>
   );

@@ -41,28 +41,28 @@ export const ActivityStatsOverview: React.FC<ActivityStatsOverviewProps> = ({
       title: 'Active Shifts',
       value: activeShifts.length,
       total: 'In Progress',
-      icon: <Clock className="w-5 h-5 text-blue-600" />,
-      color: 'bg-blue-50/50 border-blue-100',
+      icon: <Clock className="w-5 h-5 text-indigo-600" />,
+      color: 'bg-indigo-50/70 border-indigo-100',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 2xl:gap-6 mb-6 sm:mb-8">
       {stats.map((stat, idx) => (
         <div
           key={idx}
-          className={`p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-between transition-all hover:shadow-md`}
+          className={`p-4 sm:p-5 2xl:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-card hover:shadow-card-hover hover:border-slate-300 flex items-center justify-between transition-all duration-200`}
         >
           <div>
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <div className="text-[10px] sm:text-xs 2xl:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">
               {stat.title}
             </div>
-            <div className="text-3xl font-extrabold text-slate-900 font-mono">
+            <div className="text-2xl sm:text-3xl 2xl:text-4xl font-extrabold text-slate-900 font-mono">
               {stat.value}
             </div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">{stat.total}</div>
+            <div className="text-[11px] sm:text-xs 2xl:text-sm text-slate-500 mt-1 font-medium">{stat.total}</div>
           </div>
-          <div className={`p-3 rounded-xl border ${stat.color}`}>
+          <div className={`p-2.5 sm:p-3 2xl:p-3.5 rounded-xl border ${stat.color}`}>
             {stat.icon}
           </div>
         </div>
