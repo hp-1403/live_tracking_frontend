@@ -5,12 +5,14 @@ import { ActivityStatsOverview } from '../../components/manager/ActivityStatsOve
 import { EmployeeLiveGrid } from '../../components/manager/EmployeeLiveGrid';
 import { LiveStreamModal } from '../../components/manager/LiveStreamModal';
 import { ShiftHistoryTable } from '../../components/manager/ShiftHistoryTable';
+import { AuthAuditLogTable } from '../../components/manager/AuthAuditLogTable';
 import { Button } from '../../components/common/Button';
 import {
   useAllActiveShiftsQuery,
   useShiftHistoryQuery,
   shiftQueryKeys,
 } from '../../hooks/queries/useShiftQueries';
+import { useAuditLogsQuery } from '../../hooks/queries/useActivityQueries';
 import { getSocket } from '../../services/socket';
 import { LiveEmployeeData } from '../../types';
 import { RefreshCw, Users, Shield } from 'lucide-react';
@@ -33,10 +35,17 @@ export const ManagerDashboard: React.FC = () => {
     isFetching: isFetchingHistory,
   } = useShiftHistoryQuery();
 
-  const isRefreshing = isFetchingActive || isFetchingHistory;
+  const {
+    data: auditLogs = [],
+    refetch: refetchAuditLogs,
+    isFetching: isFetchingAudit,
+    isLoading: isLoadingAudit,
+  } = useAuditLogsQuery();
+
+  const isRefreshing = isFetchingActive || isFetchingHistory || isFetchingAudit;
 
   const handleRefresh = async () => {
-    await Promise.all([refetchActiveShifts(), refetchHistory()]);
+    await Promise.all([refetchActiveShifts(), refetchHistory(), refetchAuditLogs()]);
   };
 
   // 2. Setup Socket.IO Realtime Listeners for Live Employee Grid
@@ -84,17 +93,17 @@ export const ManagerDashboard: React.FC = () => {
   }, [queryClient]);
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-16">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-2xl font-extrabold text-slate-100 flex items-center gap-2.5">
-              <Shield className="w-6 h-6 text-indigo-400" /> Management Command Center
+            <h2 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2.5">
+              <Shield className="w-6 h-6 text-indigo-600" /> Management Command Center
             </h2>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-slate-500 mt-1">
               Live real-time employee presence, screen captures, webcam feeds, and shift performance
             </p>
           </div>
@@ -119,10 +128,10 @@ export const ManagerDashboard: React.FC = () => {
         {/* Live Employee Grid Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-400" /> Live Employee Monitoring Grid
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-indigo-600" /> Live Employee Monitoring Grid
             </h3>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-500 font-medium">
               Auto-updating via WebSockets
             </span>
           </div>
@@ -136,6 +145,9 @@ export const ManagerDashboard: React.FC = () => {
 
         {/* Historical Shifts Table */}
         <ShiftHistoryTable shifts={shiftHistory} />
+
+        {/* Database Audit Logs Table (Logins, Logouts, Auto-Shifts) */}
+        <AuthAuditLogTable logs={auditLogs} isLoading={isLoadingAudit} />
 
         {/* Live Video Stream Modal */}
         <LiveStreamModal

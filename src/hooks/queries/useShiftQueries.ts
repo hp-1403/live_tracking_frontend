@@ -79,12 +79,14 @@ export const useUpdateShiftStatusMutation = () => {
       shiftId,
       status,
       idleSecondsDelta = 0,
+      reason,
     }: {
       shiftId: string;
       status: 'active' | 'paused' | 'completed';
       idleSecondsDelta?: number;
+      reason?: string;
     }) => {
-      const res = await api.updateShiftStatus(shiftId, status, idleSecondsDelta);
+      const res = await api.updateShiftStatus(shiftId, status, idleSecondsDelta, reason);
       return normalizeShift(res.shift) as Shift;
     },
     onSuccess: (updatedShift) => {

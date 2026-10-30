@@ -1,15 +1,17 @@
 import * as yup from 'yup';
 
 export const loginSchema = yup.object().shape({
-  email: yup
+  employeeId: yup
     .string()
     .trim()
-    .email('Please enter a valid email address')
-    .required('Email address is required'),
-  password: yup
+    .required('Employee ID is required')
+    .matches(/^EMP\d+$/i, 'Employee ID must be in format EMP0001'),
+  name: yup
     .string()
-    .min(6, 'Password must be at least 6 characters')
-    .required('Password is required'),
+    .trim()
+    .min(2, 'Employee name must be at least 2 characters')
+    .max(100, 'Employee name cannot exceed 100 characters')
+    .required('Employee name is required'),
 });
 
 export type LoginFormData = yup.InferType<typeof loginSchema>;
@@ -18,21 +20,12 @@ export const registerSchema = yup.object().shape({
   fullName: yup
     .string()
     .trim()
-    .min(2, 'Full name must be at least 2 characters')
-    .max(100, 'Full name cannot exceed 100 characters')
-    .required('Full name is required'),
-  email: yup
-    .string()
-    .trim()
-    .email('Please enter a valid email address')
-    .required('Email address is required'),
-  password: yup
-    .string()
-    .min(6, 'Password must be at least 6 characters')
-    .required('Password is required'),
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name cannot exceed 100 characters')
+    .required('Name is required'),
   role: yup
     .string()
-    .oneOf(['employee', 'manager'], 'Please select a valid role')
+    .oneOf(['employee', 'manager', 'admin'], 'Please select a valid role')
     .default('employee')
     .required('Role is required'),
 });

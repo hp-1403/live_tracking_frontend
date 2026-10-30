@@ -2,8 +2,9 @@ export type UserRole = 'employee' | 'manager';
 
 export interface User {
   id: string;
+  employeeId?: string;
   fullName: string;
-  email: string;
+  email?: string;
   role: UserRole;
   avatarUrl?: string;
   createdAt?: string;
@@ -46,4 +47,15 @@ export interface LiveEmployeeData {
   lastPing: string;
   shiftId?: string;
   avatarUrl?: string;
+}
+
+export interface AuthAuditLog {
+  id: string;
+  userId?: string;
+  employeeId: string;
+  employeeName: string;
+  action: 'LOGIN' | 'LOGOUT' | 'SHIFT_STARTED' | 'SHIFT_PAUSED' | 'SHIFT_RESUMED' | 'SHIFT_COMPLETED' | 'AUTO_PAUSED_INACTIVITY';
+  details?: string;
+  ipAddress?: string;
+  createdAt: string;
 }

@@ -39,17 +39,30 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const api = {
   // Auth
-  login: (credentials: { email: string; password: string }) =>
-    request<{ user: any; token: string }>('/auth/login', {
+  login: (credentials: { employeeId: string; name: string }) =>
+    request<{ success: boolean; user: any; token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     }),
 
-  register: (payload: { fullName: string; email: string; password: string; role: 'employee' | 'manager' }) =>
-    request<{ user: any; token: string }>('/auth/register', {
+  register: (payload: { fullName: string; role?: string; email?: string }) =>
+    request<{
+      success: boolean;
+      employee?: { employeeId: string; name: string };
+      user: any;
+      token: string;
+    }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  logout: (payload?: { userId?: string; employeeId?: string }) =>
+    request<{ success: boolean }>('/auth/logout', {
+      method: 'POST',
+      body: payload ? JSON.stringify(payload) : undefined,
+    }).catch(() => ({ success: true })),
+
+  getAuditLogs: () => request<{ logs: any[] }>('/auth/audit-logs'),
 
   getMe: () => request<{ user: any }>('/auth/me'),
 
@@ -59,10 +72,10 @@ export const api = {
       method: 'POST',
     }),
 
-  updateShiftStatus: (id: string, status: 'active' | 'paused' | 'completed', idleSecondsDelta = 0) =>
+  updateShiftStatus: (id: string, status: 'active' | 'paused' | 'completed', idleSecondsDelta = 0, reason?: string) =>
     request<{ shift: any }>(`/shifts/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status, idleSecondsDelta }),
+      body: JSON.stringify({ status, idleSecondsDelta, reason }),
     }),
 
   getMyActiveShift: () => request<{ shift: any | null }>('/shifts/my-active'),
