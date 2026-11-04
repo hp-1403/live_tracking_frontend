@@ -79,7 +79,7 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-3 sm:p-6 lg:p-8 2xl:p-12 overflow-hidden bg-slate-100">
+    <div className="min-h-screen relative flex items-start sm:items-center justify-center px-3 py-6 sm:p-6 lg:p-8 2xl:p-12 overflow-x-hidden overflow-y-auto bg-slate-100">
       {/* 1. Office Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center filter brightness-105 contrast-95 transform scale-105"
@@ -93,7 +93,7 @@ export const RegisterPage: React.FC = () => {
       <div className="absolute top-1/4 left-1/4 w-72 sm:w-96 2xl:w-[30rem] h-72 sm:h-96 2xl:h-[30rem] bg-emerald-200/25 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-72 sm:w-96 2xl:w-[30rem] h-72 sm:h-96 2xl:h-[30rem] bg-indigo-200/20 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-md 2xl:max-w-lg relative z-10">
+      <div className="w-full max-w-md 2xl:max-w-lg min-w-0 relative z-10">
         {/* Brand header */}
         <div className="text-center mb-4 sm:mb-6">
           <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 2xl:w-14 2xl:h-14 rounded-2xl bg-indigo-600 shadow-md shadow-indigo-600/25 mb-2.5 sm:mb-3 text-white">

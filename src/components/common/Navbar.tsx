@@ -20,14 +20,14 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
-      <div className="max-w-7xl 2xl:max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 h-14 sm:h-16 flex items-center justify-between gap-2">
+      <div className="max-w-7xl 2xl:max-w-[1720px] min-w-0 mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 h-14 sm:h-16 flex items-center justify-between gap-2">
         {/* Brand */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <div className="min-w-0 flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 flex-shrink-0">
             <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <div>
-            <span className="text-base sm:text-lg 2xl:text-xl font-bold bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-700 bg-clip-text text-transparent">
+          <div className="min-w-0">
+            <span className="block truncate text-base sm:text-lg 2xl:text-xl font-bold bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-700 bg-clip-text text-transparent">
               LiveTracker
             </span>
             <div className="text-[9px] sm:text-[10px] 2xl:text-[11px] tracking-wider uppercase text-slate-500 font-semibold truncate">

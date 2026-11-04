@@ -13,7 +13,7 @@ const AppRoutes: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-slate-600 gap-3 p-4">
+      <div className="min-h-screen w-full bg-slate-50 flex flex-col items-center justify-center text-slate-600 gap-3 p-4">
         <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 sm:border-[3px] border-indigo-600 border-t-transparent rounded-full animate-spin" />
         <span className="text-xs sm:text-sm 2xl:text-base tracking-wider uppercase font-mono text-slate-500 font-semibold text-center">Initializing LiveTracker...</span>
       </div>

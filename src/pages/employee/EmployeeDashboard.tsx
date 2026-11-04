@@ -180,7 +180,7 @@ export const EmployeeDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-12 sm:pb-16 2xl:pb-24">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-slate-50 text-slate-900 pb-12 sm:pb-16 2xl:pb-24">
       <Navbar />
 
       <main className="max-w-7xl 2xl:max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 pt-4 sm:pt-6 lg:pt-8 2xl:pt-10 space-y-4 sm:space-y-6 lg:space-y-8">
@@ -241,9 +241,9 @@ export const EmployeeDashboard: React.FC = () => {
         />
 
         {/* Dual Video Stream Preview & Activity Column */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-6 sm:gap-8 2xl:gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-6 sm:gap-8 2xl:gap-10 items-start min-w-0">
           {/* Main Live Video & Screen Sharing Feed: 2 cols on lg, 3 cols on 2xl */}
-          <div className="lg:col-span-2 2xl:col-span-3 space-y-3.5 sm:space-y-4">
+          <div className="lg:col-span-2 2xl:col-span-3 min-w-0 space-y-3.5 sm:space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
               <h3 className="text-base sm:text-lg 2xl:text-xl font-bold text-slate-900 flex items-center gap-2">
                 <Video className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" /> Live Feed Broadcast Preview
@@ -274,7 +274,7 @@ export const EmployeeDashboard: React.FC = () => {
           </div>
 
           {/* Right 1 Col: Activity Tracker Status */}
-          <div className="lg:col-span-1 2xl:col-span-1 space-y-4 sm:space-y-6">
+          <div className="lg:col-span-1 2xl:col-span-1 min-w-0 space-y-4 sm:space-y-6">
             <ActivityStatusWidget
               isIdle={isIdle}
               idleSeconds={idleSeconds}

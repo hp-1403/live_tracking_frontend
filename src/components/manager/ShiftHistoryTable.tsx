@@ -61,7 +61,7 @@ export const ShiftHistoryTable: React.FC<ShiftHistoryTableProps> = ({ shifts }) 
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <div className="responsive-table -mx-4 sm:mx-0">
         <div className="inline-block min-w-full align-middle px-4 sm:px-0">
           <table className="min-w-full text-left text-xs 2xl:text-sm">
             <thead>
