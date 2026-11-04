@@ -75,7 +75,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-3 sm:p-6 lg:p-10 2xl:p-16 overflow-hidden bg-slate-100">
+    <div className="min-h-screen relative flex items-start lg:items-center justify-center px-3 py-6 sm:p-6 lg:p-10 2xl:p-16 overflow-x-hidden overflow-y-auto bg-slate-100">
       {/* 1. High-Resolution Pristine Clean Modern Office Background */}
       <div
         className="absolute inset-0 bg-cover bg-center filter brightness-105 contrast-95 scale-100"
@@ -90,9 +90,9 @@ export const LoginPage: React.FC = () => {
       <div className="absolute bottom-1/4 right-1/5 w-72 sm:w-96 2xl:w-[32rem] h-72 sm:h-96 2xl:h-[32rem] bg-teal-400/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* 4. Main Two-Column Container */}
-      <div className="w-full max-w-5xl 2xl:max-w-7xl relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 2xl:gap-16 items-center">
+      <div className="w-full max-w-5xl 2xl:max-w-7xl min-w-0 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 2xl:gap-16 items-center">
         {/* Left Column: Branding, Elegant Hero Typography & Feature Showcase */}
-        <div className="lg:col-span-7 space-y-4 sm:space-y-6 lg:space-y-8 pr-0 lg:pr-4">
+        <div className="lg:col-span-7 min-w-0 space-y-4 sm:space-y-6 lg:space-y-8 pr-0 lg:pr-4">
           {/* Brand Badge */}
           <div className="inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/80 backdrop-blur-xl border border-white/90 shadow-sm text-slate-800">
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-sm">
@@ -156,7 +156,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Right Column: Transparent Frosted Glass Login Card */}
-        <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
+        <div className="lg:col-span-5 min-w-0 w-full max-w-md mx-auto lg:max-w-none">
           <div className="bg-white/75 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-9 2xl:p-11 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.1)] border border-white/90 relative overflow-hidden">
             {/* Top decorative gradient bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 via-brand-500 to-teal-500" />

@@ -40,11 +40,11 @@ export const ActivityStatusWidget: React.FC<ActivityStatusWidgetProps> = ({
         <div className="space-y-3 sm:space-y-4">
           {/* Status Indicator */}
           <div className="p-3 sm:p-3.5 2xl:p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-            <div className="flex items-center justify-between text-xs 2xl:text-sm text-slate-600 mb-1.5 font-medium">
-              <span className="flex items-center gap-1.5">
+            <div className="flex items-start justify-between gap-2 text-xs 2xl:text-sm text-slate-600 mb-1.5 font-medium">
+              <span className="min-w-0 flex items-start gap-1.5">
                 <MousePointer className="w-3.5 h-3.5 text-indigo-600" /> Inactivity (Auto-Pause at 180s)
               </span>
-              <span className="font-mono text-slate-900 font-bold">{idleSeconds}s / 180s</span>
+              <span className="font-mono text-slate-900 font-bold whitespace-nowrap">{idleSeconds}s / 180s</span>
             </div>
             {/* Progress bar to idle threshold (180s = 3 minutes) */}
             <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
@@ -141,7 +141,7 @@ export const ActivityStatusWidget: React.FC<ActivityStatusWidgetProps> = ({
         <span className="flex items-center gap-1.5">
           <Wifi className="w-3.5 h-3.5 text-emerald-600 animate-pulse" /> Live Server Sync
         </span>
-        <span className="font-mono text-slate-600">
+          <span className="font-mono text-slate-600 whitespace-nowrap">
           {lastPingTime ? new Date(lastPingTime).toLocaleTimeString() : 'Syncing...'}
         </span>
       </div>
