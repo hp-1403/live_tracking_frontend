@@ -99,7 +99,7 @@ export const RegisterPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 2xl:w-14 2xl:h-14 rounded-2xl bg-indigo-600 shadow-md shadow-indigo-600/25 mb-2.5 sm:mb-3 text-white">
             <Activity className="w-5 h-5 sm:w-6 sm:h-6 2xl:w-7 2xl:h-7" />
           </div>
-          <h1 className="text-xl sm:text-2xl 2xl:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl 2xl:text-3xl font-serif font-black text-slate-900 tracking-tight">
             Live Employee Tracker
           </h1>
           <p className="text-xs 2xl:text-sm text-slate-500 mt-1">
@@ -113,7 +113,7 @@ export const RegisterPage: React.FC = () => {
           {!registeredEmployee ? (
             <>
               <div className="flex items-center justify-between mb-5 sm:mb-6">
-                <h2 className="text-base sm:text-lg 2xl:text-xl font-bold text-slate-900">Create New Account</h2>
+                <h2 className="text-base sm:text-lg 2xl:text-xl font-serif font-bold text-slate-900">Create New Account</h2>
                 <Link
                   to="/login"
                   className="text-xs 2xl:text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 font-medium transition-colors"

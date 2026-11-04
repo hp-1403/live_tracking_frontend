@@ -163,7 +163,7 @@ export const LoginPage: React.FC = () => {
 
             {/* Card Header */}
             <div className="mb-5 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl 2xl:text-3xl font-extrabold text-slate-900 tracking-tight">
+              <h2 className="text-xl sm:text-2xl 2xl:text-3xl font-serif font-extrabold text-slate-900 tracking-tight">
                 Welcome Back
               </h2>
               <p className="text-xs sm:text-sm 2xl:text-base text-slate-600 font-medium mt-1">
