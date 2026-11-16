@@ -66,10 +66,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await api.register(payload);
       const generatedId = response.employee?.employeeId || response.user?.employeeId;
-      setUser(response.user);
-      setToken(response.token);
-      setAuthToken(response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      // If no admin was logged in, set user.
+      // If admin is already logged in, KEEP admin logged in and do not overwrite admin session!
+      if (!user) {
+        setUser(response.user);
+        setToken(response.token);
+        setAuthToken(response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+      }
       return { user: response.user, employeeId: generatedId };
     } finally {
       setIsLoading(false);

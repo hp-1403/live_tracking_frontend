@@ -82,7 +82,7 @@ export const ActivityStatusWidget: React.FC<ActivityStatusWidgetProps> = ({
             <p className="text-[11px] 2xl:text-xs text-slate-500 leading-relaxed">
               {isScreenMotionActive ? (
                 <span className="text-emerald-700 font-medium">
-                  ✓ Screen Motion Active: Detects cursor and keyboard activity in all Chrome tabs &amp; desktop apps.
+                  ✓ Screen Motion Active: Detects scrolling, cursor &amp; typing across all Chrome tabs &amp; windows.
                 </span>
               ) : hasIdleDetectorPermission ? (
                 <span className="text-emerald-700 font-medium">
@@ -90,7 +90,7 @@ export const ActivityStatusWidget: React.FC<ActivityStatusWidgetProps> = ({
                 </span>
               ) : (
                 <span className="text-amber-700 font-medium">
-                  ⚠️ Background tabs are isolated by your browser. Share screen or grant idle permission so other tabs reset your timer!
+                  ⚠️ Background tabs are isolated by your browser. Share screen or grant idle permission so scrolling/typing in other tabs resets your timer!
                 </span>
               )}
             </p>
@@ -141,7 +141,7 @@ export const ActivityStatusWidget: React.FC<ActivityStatusWidgetProps> = ({
         <span className="flex items-center gap-1.5">
           <Wifi className="w-3.5 h-3.5 text-emerald-600 animate-pulse" /> Live Server Sync
         </span>
-          <span className="font-mono text-slate-600 whitespace-nowrap">
+        <span className="font-mono text-slate-600 whitespace-nowrap">
           {lastPingTime ? new Date(lastPingTime).toLocaleTimeString() : 'Syncing...'}
         </span>
       </div>

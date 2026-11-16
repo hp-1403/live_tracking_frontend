@@ -194,7 +194,7 @@ export const EmployeeDashboard: React.FC = () => {
                   Cross-Tab Activity Tracking Inactive
                 </h4>
                 <p className="text-[11px] sm:text-xs 2xl:text-sm text-amber-700 mt-0.5">
-                  Browsers strictly isolate tabs for security. To ensure your cursor and keyboard activity in <strong>other Chrome tabs and desktop apps</strong> reset your 3-minute timer, please share your screen or allow the idle API.
+                  Browsers strictly isolate tabs for security. To ensure your scrolling, cursor &amp; typing in <strong>other Chrome tabs and desktop apps</strong> reset your 3-minute timer, please share your screen or allow the idle API.
                 </p>
               </div>
             </div>

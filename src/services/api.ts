@@ -64,6 +64,21 @@ export const api = {
 
   getAuditLogs: () => request<{ logs: any[] }>('/auth/audit-logs'),
 
+  getUsers: () =>
+    request<{
+      success: boolean;
+      users: Array<{
+        id: string;
+        employeeId: string;
+        fullName: string;
+        email?: string;
+        role: string;
+        avatarUrl?: string;
+        createdAt?: string;
+      }>;
+      nextEmployeeId: string;
+    }>('/auth/users'),
+
   getMe: () => request<{ user: any }>('/auth/me'),
 
   // Shifts

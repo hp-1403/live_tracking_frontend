@@ -47,3 +47,15 @@ export const useAuditLogsQuery = () => {
     refetchInterval: 10000,
   });
 };
+
+// 4. Get All Registered Users & Allocated Employee IDs Directory
+export const useUsersQuery = () => {
+  return useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await api.getUsers();
+      return res;
+    },
+    refetchInterval: 15000,
+  });
+};

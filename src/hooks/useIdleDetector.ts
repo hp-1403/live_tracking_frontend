@@ -34,10 +34,10 @@ export const useIdleDetector = ({
   const handleUserActivity = useCallback(() => {
     lastActivityTimestamp.current = Date.now();
     hasTriggeredPauseRef.current = false;
+    setIdleSeconds(0);
     if (isIdleRef.current) {
       isIdleRef.current = false;
       setIsIdle(false);
-      setIdleSeconds(0);
       if (onIdleStateChange) {
         onIdleStateChange(false, 0);
       }
@@ -45,11 +45,15 @@ export const useIdleDetector = ({
   }, [onIdleStateChange]);
 
   // =========================================================================
-  // 1. SCREEN STREAM MOTION DETECTION (Unthrottled Background Detection)
+  // 1. SCREEN STREAM MOTION DETECTION (Works across all background tabs & windows)
   // When screen is shared ("Entire Screen"), any mouse move, typing,
-  // or window switch in ANY other tab (Chrome, Brave) or desktop app changes pixels.
-  // We use WebCodecs MediaStreamTrackProcessor (raw frames, never throttled by Chromium)
-  // with a fallback to in-viewport video element canvas diffing.
+  // or window switch in ANY other Chrome tab, window, or desktop app changes pixels.
+  //
+  // CRITICAL SMART FILTER:
+  // - Excludes the top-left area where the "Work Shift Tracker" clock (00:06:10) is located.
+  //   This ensures that the ticking clock digits NEVER reset the timer when sitting idle!
+  // - Any real user activity in background tabs (scrolling pages, moving cursor, typing)
+  //   changes pixels outside the timer area and immediately resets the timer to 0!
   // =========================================================================
   useEffect(() => {
     if (!screenStream) {
@@ -65,134 +69,100 @@ export const useIdleDetector = ({
 
     setIsScreenMotionActive(true);
     let isDisposed = false;
-    let trackReader: any = null;
     let intervalId: any = null;
-    let fallbackVideo: HTMLVideoElement | null = null;
 
-    // Canvas for sampling (160x90 = 14,400 pixels for microsecond comparisons)
+    // Offscreen sampling canvas (320x180)
     const canvas = document.createElement('canvas');
-    canvas.width = 160;
-    canvas.height = 90;
+    canvas.width = 320;
+    canvas.height = 180;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    // Video element placed in DOM (opacity 0.001, z-index -1)
+    // Having it in the DOM guarantees Chromium never throttles or pauses frame decoding in background!
+    const video = document.createElement('video');
+    video.srcObject = screenStream;
+    video.muted = true;
+    video.playsInline = true;
+    video.autoplay = true;
+    video.style.position = 'fixed';
+    video.style.bottom = '0px';
+    video.style.right = '0px';
+    video.style.width = '320px';
+    video.style.height = '180px';
+    video.style.opacity = '0.001';
+    video.style.pointerEvents = 'none';
+    video.style.zIndex = '-1';
+    document.body.appendChild(video);
+
+    video.play().catch(() => {});
+
     let prevData: Uint8ClampedArray | null = null;
 
-    const processPixelDiff = (currentData: Uint8ClampedArray) => {
-      if (prevData && prevData.length === currentData.length) {
-        let diffCount = 0;
-        // Sample every 4th pixel (stride = 16 bytes: RGBA * 4)
-        for (let i = 0; i < currentData.length; i += 16) {
-          const rDiff = Math.abs(currentData[i] - prevData[i]);
-          const gDiff = Math.abs(currentData[i + 1] - prevData[i + 1]);
-          const bDiff = Math.abs(currentData[i + 2] - prevData[i + 2]);
+    const checkScreenMotion = () => {
+      if (isDisposed) return;
+      if (video.readyState >= 2 && ctx) {
+        try {
+          ctx.drawImage(video, 0, 0, 320, 180);
+          const currentData = ctx.getImageData(0, 0, 320, 180).data;
 
-          if (rDiff + gDiff + bDiff > 35) {
-            diffCount++;
-            // 3 sampled pixels with contrast diff = genuine cursor move or keypress
-            if (diffCount >= 3) {
-              handleUserActivity();
-              break;
-            }
-          }
-        }
-      }
-      prevData = new Uint8ClampedArray(currentData);
-    };
+          if (prevData && prevData.length === currentData.length) {
+            let outsideTimerDiffCount = 0;
+            let totalDiffCount = 0;
 
-    // METHOD A: WebCodecs MediaStreamTrackProcessor (Native Chromium raw frames)
-    if ('MediaStreamTrackProcessor' in window) {
-      try {
-        const processor = new (window as any).MediaStreamTrackProcessor({ track: videoTrack });
-        trackReader = processor.readable.getReader();
-        let lastSampleTime = 0;
+            // Sample every 4th pixel (stride = 16 bytes: RGBA * 4)
+            for (let i = 0; i < currentData.length; i += 16) {
+              const rDiff = Math.abs(currentData[i] - prevData[i]);
+              const gDiff = Math.abs(currentData[i + 1] - prevData[i + 1]);
+              const bDiff = Math.abs(currentData[i + 2] - prevData[i + 2]);
 
-        const readFrames = async () => {
-          while (!isDisposed) {
-            try {
-              const { done, value: videoFrame } = await trackReader.read();
-              if (done || !videoFrame) break;
+              if (rDiff + gDiff + bDiff > 35) {
+                totalDiffCount++;
+                const pixelIndex = i / 4;
+                const x = pixelIndex % 320;
+                const y = Math.floor(pixelIndex / 320);
 
-              const now = Date.now();
-              // Sample at most once every 400ms to keep CPU near 0%
-              if (now - lastSampleTime >= 400 && ctx) {
-                lastSampleTime = now;
-                try {
-                  ctx.drawImage(videoFrame, 0, 0, 160, 90);
-                  const currentData = ctx.getImageData(0, 0, 160, 90).data;
-                  processPixelDiff(currentData);
-                } catch {
-                  // Ignore frame read errors
+                // Exclude the top-left area where the Work Shift Tracker clock is located (x: 0-210, y: 0-65)
+                // This prevents the ticking clock digits (00:06:10 -> 00:06:11) from resetting the idle timer!
+                const isInsideTimerArea = x < 210 && y < 65;
+                if (!isInsideTimerArea) {
+                  outsideTimerDiffCount++;
                 }
               }
-              videoFrame.close();
-            } catch {
-              break;
+            }
+
+            // Real user activity in background tabs/windows:
+            // - Scrolling pages changes hundreds of pixels across the window (diffCount > 500)
+            // - Moving the cursor changes 30+ pixels
+            // - Typing changes 25+ pixels
+            // Whereas the ticking clock in the Work Shift Tracker is ignored!
+            if (outsideTimerDiffCount >= 14 || totalDiffCount >= 40) {
+              handleUserActivity();
             }
           }
-        };
-
-        readFrames();
-      } catch (err) {
-        console.warn('MediaStreamTrackProcessor unavailable, falling back to video:', err);
-      }
-    }
-
-    // METHOD B: Fallback using rendered video element (kept in viewport to prevent Chromium throttling)
-    if (!trackReader) {
-      const video = document.createElement('video');
-      video.srcObject = screenStream;
-      video.muted = true;
-      video.playsInline = true;
-      video.autoplay = true;
-      // Keep in DOM viewport with near-zero opacity so Chromium compositor never suspends decoding
-      video.style.position = 'fixed';
-      video.style.bottom = '0px';
-      video.style.right = '0px';
-      video.style.width = '320px';
-      video.style.height = '180px';
-      video.style.opacity = '0.001';
-      video.style.pointerEvents = 'none';
-      video.style.zIndex = '-1';
-      document.body.appendChild(video);
-      fallbackVideo = video;
-
-      video.play().catch(() => {});
-
-      const checkVideoDiff = () => {
-        if (isDisposed) return;
-        if (video.readyState >= 2 && ctx) {
-          try {
-            ctx.drawImage(video, 0, 0, 160, 90);
-            const currentData = ctx.getImageData(0, 0, 160, 90).data;
-            processPixelDiff(currentData);
-          } catch {}
+          prevData = new Uint8ClampedArray(currentData);
+        } catch {
+          // Ignore transient read errors
         }
-      };
+      }
+    };
 
-      intervalId = setInterval(checkVideoDiff, 400);
-    }
+    // Sample every 400ms (2.5 times per second)
+    intervalId = setInterval(checkScreenMotion, 400);
 
     return () => {
       isDisposed = true;
-      if (trackReader) {
-        try {
-          trackReader.cancel();
-        } catch {}
-      }
       if (intervalId) clearInterval(intervalId);
-      if (fallbackVideo) {
-        fallbackVideo.pause();
-        fallbackVideo.srcObject = null;
-        if (fallbackVideo.parentNode) {
-          fallbackVideo.parentNode.removeChild(fallbackVideo);
-        }
+      video.pause();
+      video.srcObject = null;
+      if (video.parentNode) {
+        video.parentNode.removeChild(video);
       }
       setIsScreenMotionActive(false);
     };
   }, [screenStream, handleUserActivity]);
 
   // =========================================================================
-  // 2. NATIVE IDLE DETECTOR API (Option B)
-  // Queries OS-level user activity (mouse / keyboard across the entire system)
+  // 2. NATIVE IDLE DETECTOR API (OS-level mouse/keyboard across all apps)
   // =========================================================================
   const startIdleDetectorInstance = useCallback(async () => {
     if (!('IdleDetector' in window)) return false;
