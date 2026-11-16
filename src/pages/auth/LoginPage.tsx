@@ -219,13 +219,13 @@ export const LoginPage: React.FC = () => {
 
             {/* Registration Navigation Link */}
             <p className="text-center text-xs 2xl:text-sm text-slate-700 mt-5 pt-4 border-t border-slate-200/60 font-medium">
-              Didn't have an account?{' '}
-              <Link
-                to="/register"
+              Didn't have an account? contact your admin{' '}
+              {/* <Link
+                // to="/register"
                 className="text-indigo-600 hover:text-indigo-700 font-bold transition-colors underline decoration-indigo-400 underline-offset-2"
               >
                 Register
-              </Link>
+              </Link> */}
             </p>
           </div>
         </div>

@@ -20,23 +20,25 @@ const AppRoutes: React.FC = () => {
     );
   }
 
-  // Not authenticated -> show login or register page
+  // Not authenticated -> only /login is accessible.
+  // If someone tries to write /register or any other URL, redirect to /login!
   if (!user) {
     return (
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
 
   // Authenticated routing by role
+  // ONLY Admin (isManager) has access to /register after logging in!
   return (
     <Routes>
       {isManager ? (
         <>
           <Route path="/manager" element={<ManagerDashboard />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/manager" replace />} />
         </>
       ) : (

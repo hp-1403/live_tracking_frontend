@@ -3,29 +3,40 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useUsersQuery } from '../../hooks/queries/useActivityQueries';
+import { useQueryClient } from '@tanstack/react-query';
+import { Navbar } from '../../components/common/Navbar';
 import { Button } from '../../components/common/Button';
 import { InputField } from '../../components/common/InputField';
 import { registerSchema, RegisterFormData } from '../../schemas/authSchemas';
 import {
-  Activity,
   ArrowRight,
   CheckCircle2,
   UserCheck,
-  Hash,
   Sparkles,
   ArrowLeft,
   Copy,
   Check,
   User,
   Shield,
+  UserPlus,
+  RefreshCw,
+  Search,
+  Hash,
+  Users,
 } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
   const { register: registerAuth } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: usersData, refetch: refetchUsers, isLoading: isLoadingUsers } = useUsersQuery();
+
+  const [activeTab, setActiveTab] = useState<'register' | 'directory'>('register');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [registeredEmployee, setRegisteredEmployee] = useState<{
     employeeId: string;
     name: string;
@@ -39,6 +50,7 @@ export const RegisterPage: React.FC = () => {
     formState: { errors: registerErrors },
     setValue: setRegisterValue,
     watch: watchRegister,
+    reset: resetForm,
   } = useForm<RegisterFormData>({
     resolver: yupResolver(registerSchema),
     defaultValues: {
@@ -63,6 +75,8 @@ export const RegisterPage: React.FC = () => {
         name: data.fullName,
         role: (data.role as 'employee' | 'manager') || 'employee',
       });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      refetchUsers();
     } catch (err: any) {
       setServerError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -70,230 +84,425 @@ export const RegisterPage: React.FC = () => {
     }
   };
 
-  const handleCopyId = () => {
-    if (registeredEmployee?.employeeId) {
-      navigator.clipboard.writeText(registeredEmployee.employeeId);
+  const handleCopyId = (id?: string) => {
+    const targetId = id || registeredEmployee?.employeeId;
+    if (targetId) {
+      navigator.clipboard.writeText(targetId);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
+  const handleRegisterAnother = () => {
+    setRegisteredEmployee(null);
+    setServerError(null);
+    resetForm({
+      fullName: '',
+      role: 'employee',
+    });
+  };
+
+  const usersList = usersData?.users || [];
+  const nextEmployeeId = usersData?.nextEmployeeId || '';
+
+  const filteredUsers = usersList.filter((u) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      u.fullName.toLowerCase().includes(q) ||
+      u.employeeId.toLowerCase().includes(q) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      u.role.toLowerCase().includes(q)
+    );
+  });
+
   return (
-    <div className="min-h-screen relative flex items-start sm:items-center justify-center px-3 py-6 sm:p-6 lg:p-8 2xl:p-12 overflow-x-hidden overflow-y-auto bg-slate-100">
-      {/* 1. Office Background Image */}
+    <div className="min-h-screen min-w-0 relative flex flex-col overflow-x-hidden overflow-y-auto bg-slate-100 text-slate-900">
+      {/* 1. High-Resolution Pristine Clean Modern Office Background */}
       <div
-        className="absolute inset-0 bg-cover bg-center filter brightness-105 contrast-95 transform scale-105"
-        style={{ backgroundImage: `url('/assets/office-bg.jpg')` }}
+        className="fixed inset-0 bg-cover bg-center filter brightness-105 contrast-95 scale-100 pointer-events-none"
+        style={{ backgroundImage: `url('/assets/clean-office-bg.jpg')` }}
       />
 
-      {/* 2. Light Theme Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-white/92 via-white/85 to-white/78 backdrop-blur-[6px]" />
+      {/* 2. Soft Luminous Light-Theme Overlay (Translucent Daylight Wash) */}
+      <div className="fixed inset-0 bg-gradient-to-r from-white/75 via-white/60 to-white/65 backdrop-blur-[3px] pointer-events-none" />
 
-      {/* 3. Subtle ambient light accents */}
-      <div className="absolute top-1/4 left-1/4 w-72 sm:w-96 2xl:w-[30rem] h-72 sm:h-96 2xl:h-[30rem] bg-emerald-200/25 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-72 sm:w-96 2xl:w-[30rem] h-72 sm:h-96 2xl:h-[30rem] bg-indigo-200/20 rounded-full blur-3xl pointer-events-none" />
+      {/* 3. Ambient Light Accents */}
+      <div className="fixed top-1/4 left-1/5 w-72 sm:w-96 2xl:w-[32rem] h-72 sm:h-96 2xl:h-[32rem] bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-1/4 right-1/5 w-72 sm:w-96 2xl:w-[32rem] h-72 sm:h-96 2xl:h-[32rem] bg-teal-400/15 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-md 2xl:max-w-lg min-w-0 relative z-10">
-        {/* Brand header */}
-        <div className="text-center mb-4 sm:mb-6">
-          <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 2xl:w-14 2xl:h-14 rounded-2xl bg-indigo-600 shadow-md shadow-indigo-600/25 mb-2.5 sm:mb-3 text-white">
-            <Activity className="w-5 h-5 sm:w-6 sm:h-6 2xl:w-7 2xl:h-7" />
+      {/* Top Admin Navbar */}
+      <div className="relative z-30">
+        <Navbar />
+      </div>
+
+      <main className="flex-1 relative z-20 flex items-center justify-center px-3 py-6 sm:px-6 lg:px-8 2xl:px-12">
+        <div className="w-full max-w-lg 2xl:max-w-xl min-w-0 space-y-4 sm:space-y-6 my-auto">
+          {/* Back Navigation Bar & Access Pill */}
+          <div className="flex items-center justify-between gap-3">
+            <Link
+              to="/manager"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/90 text-slate-700 hover:text-indigo-600 text-xs sm:text-sm font-semibold transition-all shadow-xs"
+            >
+              <ArrowLeft className="w-4 h-4 text-indigo-600" /> Back to Dashboard
+            </Link>
+            <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-full bg-purple-100/85 backdrop-blur-md text-purple-800 border border-purple-200/90 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-purple-600" /> Admin Access Only
+            </span>
           </div>
-          <h1 className="text-xl sm:text-2xl 2xl:text-3xl font-serif font-black text-slate-900 tracking-tight">
-            Live Employee Tracker
-          </h1>
-          <p className="text-xs 2xl:text-sm text-slate-500 mt-1">
-            Create your account to start tracking shifts &amp; activities
-          </p>
-        </div>
 
-        {/* Main Auth Card */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-5 sm:p-8 2xl:p-10 shadow-card-hover border border-slate-200/90 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 via-brand-500 to-teal-500" />
-          {!registeredEmployee ? (
-            <>
-              <div className="flex items-center justify-between mb-5 sm:mb-6">
-                <h2 className="text-base sm:text-lg 2xl:text-xl font-serif font-bold text-slate-900">Create New Account</h2>
-                <Link
-                  to="/login"
-                  className="text-xs 2xl:text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 font-medium transition-colors"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Login
-                </Link>
+          {/* Main Registration Card with Frosted Glass Effect */}
+          <div className="bg-white/80 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 2xl:p-10 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.12)] border border-white/90 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 via-purple-500 to-teal-500" />
+
+            {/* Header */}
+            <div className="flex items-start gap-3.5 mb-5">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-600/25">
+                {activeTab === 'register' ? (
+                  <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" />
+                ) : (
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6" />
+                )}
               </div>
+              <div>
+                <h2 className="font-serif text-xl sm:text-2xl 2xl:text-3xl font-bold tracking-tight text-slate-900">
+                  {activeTab === 'register' ? 'Register Member' : 'Allocated Employee IDs'}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+                  {activeTab === 'register'
+                    ? 'Create new credentials with automatic sequential Employee ID allocation.'
+                    : 'View, search, and copy allocated Employee IDs across all registered members.'}
+                </p>
+              </div>
+            </div>
 
-              {serverError && (
-                <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
-                  {serverError}
-                </div>
-              )}
+            {/* Tab Navigation Pill */}
+            <div className="flex items-center gap-2 p-1 bg-white/70 backdrop-blur-md rounded-xl mb-5 text-xs font-semibold border border-white/90">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('register');
+                  setServerError(null);
+                }}
+                className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeTab === 'register'
+                    ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Register Member</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('directory')}
+                className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeTab === 'directory'
+                    ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                }`}
+              >
+                <Hash className="w-3.5 h-3.5" />
+                <span>View Allocated IDs</span>
+                {usersList.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px] font-bold">
+                    {usersList.length}
+                  </span>
+                )}
+              </button>
+            </div>
 
-              {/* REGISTRATION FORM */}
-              <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-4" noValidate>
-                {/* Role Selector: Employee OR Admin */}
-                <div>
-                  <label className="block text-xs 2xl:text-sm font-semibold text-slate-700 mb-1.5">
-                    Register As
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setRegisterValue('role', 'employee')}
-                      className={`p-2.5 2xl:p-3 rounded-xl border text-xs 2xl:text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
-                        selectedRole === 'employee'
-                          ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm ring-1 ring-indigo-500/40'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-100'
-                      }`}
-                    >
-                      <User className="w-3.5 h-3.5 text-indigo-600" /> Employee
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRegisterValue('role', 'manager')}
-                      className={`p-2.5 2xl:p-3 rounded-xl border text-xs 2xl:text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
-                        selectedRole === 'manager' || selectedRole === 'admin'
-                          ? 'bg-purple-50 border-purple-500 text-purple-700 shadow-sm ring-1 ring-purple-500/40'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-100'
-                      }`}
-                    >
-                      <Shield className="w-3.5 h-3.5 text-purple-600" /> Admin
-                    </button>
+            {/* TAB 1: REGISTRATION */}
+            {activeTab === 'register' && (
+              <div>
+                {!registeredEmployee ? (
+                  <>
+                    {/* Next ID Indicator */}
+                    {nextEmployeeId && (
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 text-xs sm:text-sm mb-4">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                          <span className="text-slate-700 font-medium">Next ID to be Allocated:</span>
+                        </div>
+                        <span className="font-mono font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200 shadow-2xs">
+                          {nextEmployeeId}
+                        </span>
+                      </div>
+                    )}
+
+                    {serverError && (
+                      <div className="mb-4 p-3 rounded-xl bg-rose-50/90 backdrop-blur-sm border border-rose-200 text-rose-700 text-xs sm:text-sm font-medium">
+                        {serverError}
+                      </div>
+                    )}
+
+                    {/* REGISTRATION FORM */}
+                    <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-4 sm:space-y-5" noValidate>
+                      {/* Role Selector: Employee OR Admin */}
+                      <div>
+                        <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
+                          Account Role
+                        </label>
+                        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setRegisterValue('role', 'employee')}
+                            className={`p-3 rounded-xl border text-xs sm:text-sm font-medium flex items-center justify-center gap-2 transition-all cursor-pointer backdrop-blur-sm ${
+                              selectedRole === 'employee'
+                                ? 'bg-indigo-50/90 border-indigo-500 text-indigo-700 shadow-sm ring-1 ring-indigo-500/40 font-semibold'
+                                : 'bg-white/70 border-white/90 text-slate-600 hover:border-slate-300 hover:bg-white/90'
+                            }`}
+                          >
+                            <User className="w-4 h-4 text-indigo-600" />
+                            <span>Employee</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRegisterValue('role', 'manager')}
+                            className={`p-3 rounded-xl border text-xs sm:text-sm font-medium flex items-center justify-center gap-2 transition-all cursor-pointer backdrop-blur-sm ${
+                              selectedRole === 'manager' || selectedRole === 'admin'
+                                ? 'bg-purple-50/90 border-purple-500 text-purple-700 shadow-sm ring-1 ring-purple-500/40 font-semibold'
+                                : 'bg-white/70 border-white/90 text-slate-600 hover:border-slate-300 hover:bg-white/90'
+                            }`}
+                          >
+                            <Shield className="w-4 h-4 text-purple-600" />
+                            <span>Admin</span>
+                          </button>
+                        </div>
+                        <p className="text-[11px] sm:text-xs text-slate-500 mt-1.5">
+                          {selectedRole === 'manager'
+                            ? 'Admins can view command center, live screen feeds, webcam monitors, and audit logs.'
+                            : 'Employees track active work shifts, webcam, and screen monitoring.'}
+                        </p>
+                      </div>
+
+                      {/* Full Name */}
+                      <InputField
+                        label="Full Name"
+                        type="text"
+                        placeholder="Enter full name (e.g. Rahul Sharma)"
+                        icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 stroke-[2.2]" />}
+                        error={registerErrors.fullName?.message}
+                        className="bg-white/80 backdrop-blur-md border-white/90 focus:bg-white"
+                        {...registerForm('fullName')}
+                      />
+
+                      {/* Submit Button */}
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="lg"
+                        isLoading={isLoading}
+                        className="w-full mt-2 shadow-md shadow-indigo-600/30"
+                        icon={<UserPlus className="w-4 h-4" />}
+                      >
+                        Assign ID &amp; Register Member
+                      </Button>
+                    </form>
+                  </>
+                ) : (
+                  /* REGISTRATION SUCCESS VIEW */
+                  <div className="space-y-5 sm:space-y-6 text-center animate-fadeIn">
+                    <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 mx-auto">
+                      <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
+                    </div>
+
+                    <div>
+                      <h2 className="font-serif text-xl sm:text-2xl 2xl:text-3xl font-bold tracking-tight text-slate-900 mb-1">
+                        Registration Successful!
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-600">
+                        <strong className="text-slate-800">{registeredEmployee.name}</strong> has been registered as{' '}
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            registeredEmployee.role === 'manager'
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                          }`}
+                        >
+                          {registeredEmployee.role === 'manager' ? (
+                            <>
+                              <Shield className="w-3 h-3 text-purple-600" /> Admin
+                            </>
+                          ) : (
+                            <>
+                              <User className="w-3 h-3 text-indigo-600" /> Employee
+                            </>
+                          )}
+                        </span>.
+                      </p>
+                    </div>
+
+                    {/* Highlighted Employee ID Box */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-white/70 backdrop-blur-md border border-white/90 text-left space-y-2.5 shadow-xs">
+                      <div className="text-[11px] 2xl:text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Generated Employee ID
+                      </div>
+                      <div className="flex items-center justify-between bg-white/95 p-3 sm:p-3.5 rounded-xl border border-slate-200/90 shadow-xs">
+                        <span className="text-xl sm:text-2xl font-mono font-bold text-indigo-600 tracking-wider">
+                          {registeredEmployee.employeeId}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyId()}
+                          className="p-2 sm:p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                          title="Copy ID"
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <span className="text-emerald-700 text-xs font-semibold">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span className="text-xs">Copy ID</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-slate-600 bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-100">
+                        Provide this Employee ID (<strong>{registeredEmployee.employeeId}</strong>) and Name (<strong>{registeredEmployee.name}</strong>) to the user for login.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        onClick={handleRegisterAnother}
+                        className="w-full justify-center bg-white/80 hover:bg-white"
+                        icon={<RefreshCw className="w-4 h-4 text-indigo-600" />}
+                      >
+                        Register Another
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="lg"
+                        onClick={() => {
+                          setActiveTab('directory');
+                          setRegisteredEmployee(null);
+                        }}
+                        className="w-full justify-center"
+                        icon={<Users className="w-4 h-4" />}
+                      >
+                        View in Directory
+                      </Button>
+                    </div>
                   </div>
-                  {registerErrors.role && (
-                    <p className="text-[11px] text-rose-600 mt-1">{registerErrors.role.message}</p>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: DIRECTORY */}
+            {activeTab === 'directory' && (
+              <div className="space-y-4">
+                {/* Search Bar */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search member by name, ID or role..."
+                      className="w-full pl-9 pr-3.5 py-2.5 text-xs sm:text-sm bg-white/80 backdrop-blur-md border border-white/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+                  {nextEmployeeId && (
+                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-100 text-xs font-medium text-slate-600 flex-shrink-0">
+                      <span>Next:</span>
+                      <span className="font-mono font-bold text-indigo-700">{nextEmployeeId}</span>
+                    </div>
                   )}
                 </div>
 
-                {/* Name */}
-                <InputField
-                  label={selectedRole === 'manager' || selectedRole === 'admin' ? 'Admin Full Name' : 'Employee Full Name'}
-                  type="text"
-                  placeholder="Enter full name"
-                  icon={<UserCheck className="w-4 h-4" />}
-                  error={registerErrors.fullName?.message}
-                  {...registerForm('fullName')}
-                />
-
-                {/* Auto-generated ID indicator */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs 2xl:text-sm font-semibold text-slate-700">
-                    ID Assigned by System
-                  </label>
-                  <div className="relative rounded-xl">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Hash className="w-4 h-4 text-indigo-600" />
+                {/* List of Members */}
+                <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+                  {isLoadingUsers ? (
+                    <div className="p-8 text-center text-xs text-slate-500">
+                      <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-indigo-600" />
+                      Loading directory...
                     </div>
-                    <input
-                      type="text"
-                      disabled
-                      value="Auto-generated on registration (e.g. EMP0001)"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-xs 2xl:text-sm font-mono text-indigo-700 cursor-not-allowed select-none"
-                    />
-                  </div>
-                  <p className="text-[11px] 2xl:text-xs text-slate-500 flex items-center gap-1 mt-1">
-                    <Sparkles className="w-3 h-3 text-indigo-600 inline" />
-                    Unique sequence ID automatically generated and assigned.
-                  </p>
+                  ) : filteredUsers.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-slate-500 bg-white/60 rounded-xl border border-white/80">
+                      No members matched your search.
+                    </div>
+                  ) : (
+                    filteredUsers.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/70 hover:bg-white/90 backdrop-blur-md border border-white/80 shadow-2xs transition-all"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0">
+                            {member.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs sm:text-sm font-bold text-slate-800 truncate">
+                                {member.fullName}
+                              </span>
+                              <span
+                                className={`text-[10px] font-semibold px-1.5 py-0.2 rounded-full ${
+                                  member.role === 'manager' || member.role === 'admin'
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : 'bg-indigo-100 text-indigo-700'
+                                }`}
+                              >
+                                {member.role === 'manager' || member.role === 'admin' ? 'Admin' : 'Employee'}
+                              </span>
+                            </div>
+                            {member.email && (
+                              <div className="text-[10px] text-slate-500 truncate">{member.email}</div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* ID & Copy */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0 pl-2">
+                          <span className="font-mono text-xs sm:text-sm font-bold text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                            {member.employeeId}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyId(member.employeeId)}
+                            className="p-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
+                            title="Copy Employee ID"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
 
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  isLoading={isLoading}
-                  className="w-full mt-4"
-                  icon={<ArrowRight className="w-4 h-4" />}
-                >
-                  {selectedRole === 'manager' || selectedRole === 'admin' ? 'Register as Admin' : 'Register as Employee'}
-                </Button>
-              </form>
-
-              {/* Footer Return Link */}
-              <p className="text-center text-xs 2xl:text-sm text-slate-600 mt-5 sm:mt-6">
-                Already have an account?{' '}
-                <Link
-                  to="/login"
-                  className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
-                >
-                  Sign In
-                </Link>
-              </p>
-            </>
-          ) : (
-            /* REGISTRATION SUCCESS VIEW */
-            <div className="space-y-5 sm:space-y-6 text-center animate-fadeIn">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 mx-auto">
-                <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
-              </div>
-
-              <div>
-                <h2 className="text-lg sm:text-xl 2xl:text-2xl font-bold text-slate-900 mb-1">Registration Successful!</h2>
-                <p className="text-xs sm:text-sm text-slate-500">
-                  Welcome aboard, <strong className="text-slate-800">{registeredEmployee.name}</strong>.
-                  Your account is registered as{' '}
-                  <span className={`inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    registeredEmployee.role === 'manager'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                  }`}>
-                    {registeredEmployee.role === 'manager' ? (
-                      <><Shield className="w-3 h-3 text-purple-600" /> Admin</>
-                    ) : (
-                      <><User className="w-3 h-3 text-indigo-600" /> Employee</>
-                    )}
-                  </span>.
-                </p>
-              </div>
-
-              {/* Highlighted Employee ID Box */}
-              <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-2">
-                <div className="text-[11px] 2xl:text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Your Assigned ID
-                </div>
-                <div className="flex items-center justify-between bg-white p-2.5 sm:p-3 rounded-lg border border-slate-200 shadow-sm">
-                  <span className="text-lg sm:text-xl font-mono font-bold text-indigo-600 tracking-wider">
-                    {registeredEmployee.employeeId}
+                {/* Bottom Bar */}
+                <div className="pt-2 flex items-center justify-between border-t border-slate-200/60">
+                  <span className="text-xs text-slate-600">
+                    Total Members: <strong className="text-slate-900">{usersList.length}</strong>
                   </span>
-                  <button
+                  <Button
                     type="button"
-                    onClick={handleCopyId}
-                    className="p-1.5 sm:p-2 rounded-lg bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 transition-colors flex items-center gap-1 text-xs font-medium"
-                    title="Copy ID"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      setActiveTab('register');
+                      setRegisteredEmployee(null);
+                    }}
+                    icon={<UserPlus className="w-3.5 h-3.5" />}
                   >
-                    {copied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-emerald-700 text-[11px]">Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span className="text-[11px]">Copy</span>
-                      </>
-                    )}
-                  </button>
+                    Register New Member
+                  </Button>
                 </div>
-                <p className="text-[11px] sm:text-xs text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-                  ⚠️ <strong>Important:</strong> Please write down or save your ID (<strong>{registeredEmployee.employeeId}</strong>). You will need both your ID and Full Name to log in.
-                </p>
               </div>
-
-              <div className="space-y-2 pt-2">
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="lg"
-                  onClick={() => navigate('/login')}
-                  className="w-full"
-                  icon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Proceed to Login
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
