@@ -38,8 +38,10 @@ export const ShiftControlCard: React.FC<ShiftControlCardProps> = ({
     const validStartTime = !isNaN(parsedStart) ? parsedStart : Date.now();
 
     const calculateElapsed = () => {
-      if (shift.status === 'paused' && shift.totalDurationSeconds !== undefined && shift.totalDurationSeconds > 0) {
-        setElapsedSeconds(shift.totalDurationSeconds);
+      if (shift.status === 'paused') {
+        // Freeze timer completely while on break
+        const pausedSecs = shift.totalDurationSeconds !== undefined ? shift.totalDurationSeconds : 0;
+        setElapsedSeconds(pausedSecs);
         return;
       }
 

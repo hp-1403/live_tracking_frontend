@@ -15,6 +15,13 @@ export const ActivityStatsOverview: React.FC<ActivityStatsOverviewProps> = ({
   const idleCount = liveEmployees.filter((e) => e.status === 'idle').length;
   const streamingCount = liveEmployees.filter((e) => e.hasScreen || e.hasWebcam).length;
 
+  // Count active shifts belonging to currently connected live employees
+  const connectedEmployeeIds = new Set(liveEmployees.map((e) => e.employeeId));
+  const activeShiftsCount =
+    liveEmployees.length > 0
+      ? activeShifts.filter((s) => connectedEmployeeIds.has(s.employeeId)).length
+      : activeShifts.length;
+
   const stats = [
     {
       title: 'Active Employees',
@@ -39,7 +46,7 @@ export const ActivityStatsOverview: React.FC<ActivityStatsOverviewProps> = ({
     },
     {
       title: 'Active Shifts',
-      value: activeShifts.length,
+      value: activeShiftsCount,
       total: 'In Progress',
       icon: <Clock className="w-5 h-5 text-indigo-600" />,
       color: 'bg-indigo-50/70 border-indigo-100',

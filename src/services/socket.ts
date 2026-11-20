@@ -34,3 +34,10 @@ export const getSocket = (): Socket => {
   }
   return socketInstance;
 };
+
+export const disconnectSocket = (): void => {
+  if (socketInstance) {
+    socketInstance.disconnect();
+    socketInstance = null;
+  }
+};

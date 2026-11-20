@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import { api, setAuthToken, clearAuthToken, getAuthToken } from '../services/api';
+import { disconnectSocket } from '../services/socket';
 
 interface AuthContextType {
   user: User | null;
@@ -206,6 +207,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       api.logout().catch(() => { });
     }
+
+    // Immediately close socket connection and notify backend of departure
+    disconnectSocket();
 
     setUser(null);
     setToken(null);
