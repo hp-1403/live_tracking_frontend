@@ -107,7 +107,7 @@ const getInitialSession = (): { user: User | null; token: string | null } => {
     if (tabToken && tabUserStr) {
       return { token: tabToken, user: JSON.parse(tabUserStr) };
     }
-  } catch {}
+  } catch { }
 
   // A fresh tab opens clean on /login without borrowing other tabs' sessions
   return { user: null, token: null };
