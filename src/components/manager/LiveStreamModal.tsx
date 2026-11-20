@@ -18,42 +18,131 @@ export const LiveStreamModal: React.FC<LiveStreamModalProps> = ({
 }) => {
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'idle' | 'failed'>('connecting');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasRemoteScreen, setHasRemoteScreen] = useState<boolean>(false);
+  const [hasRemoteWebcam, setHasRemoteWebcam] = useState<boolean>(false);
 
   const screenVideoRef = useRef<HTMLVideoElement | null>(null);
   const webcamVideoRef = useRef<HTMLVideoElement | null>(null);
+  const pcsRef = useRef<Record<string, RTCPeerConnection>>({});
 
   useEffect(() => {
     if (!isOpen || !employee) {
       setConnectionStatus('idle');
+      setHasRemoteScreen(false);
+      setHasRemoteWebcam(false);
       return;
     }
 
     setConnectionStatus('connecting');
     setErrorMessage(null);
+    setHasRemoteScreen(false);
+    setHasRemoteWebcam(false);
     const socket = getSocket();
 
     // Request stream from employee via socket
     socket.emit('manager-request-stream', { employeeId: employee.employeeId });
+
+    const handleWebRtcOffer = async (data: {
+      senderSocketId: string;
+      sdp: any;
+      streamType: 'screen' | 'webcam';
+    }) => {
+      console.log(`[WebRTC Manager] Received offer for ${data.streamType} from ${data.senderSocketId}`);
+      try {
+        if (pcsRef.current[data.streamType]) {
+          pcsRef.current[data.streamType].close();
+        }
+
+        const pc = new RTCPeerConnection({
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+          ],
+        });
+        pcsRef.current[data.streamType] = pc;
+
+        pc.ontrack = (event) => {
+          console.log(`[WebRTC Manager] Received track for ${data.streamType}:`, event.streams[0]);
+          const remoteStream = event.streams[0];
+          if (data.streamType === 'screen') {
+            setHasRemoteScreen(true);
+            if (screenVideoRef.current) {
+              screenVideoRef.current.srcObject = remoteStream;
+              screenVideoRef.current.play().catch((e) => console.warn('Screen play error:', e));
+            }
+          } else if (data.streamType === 'webcam') {
+            setHasRemoteWebcam(true);
+            if (webcamVideoRef.current) {
+              webcamVideoRef.current.srcObject = remoteStream;
+              webcamVideoRef.current.play().catch((e) => console.warn('Webcam play error:', e));
+            }
+          }
+          setConnectionStatus('connected');
+        };
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit('webrtc-ice-candidate', {
+              targetSocketId: data.senderSocketId,
+              candidate: event.candidate,
+              streamType: data.streamType,
+            });
+          }
+        };
+
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        socket.emit('webrtc-answer', {
+          targetSocketId: data.senderSocketId,
+          sdp: answer,
+          streamType: data.streamType,
+        });
+      } catch (err: any) {
+        console.error('[WebRTC Manager] Error handling offer:', err);
+      }
+    };
+
+    const handleIceCandidate = async (data: {
+      candidate: any;
+      streamType: 'screen' | 'webcam';
+    }) => {
+      const pc = pcsRef.current[data.streamType];
+      if (pc && data.candidate) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (err) {
+          console.warn('[WebRTC Manager] ICE error:', err);
+        }
+      }
+    };
 
     const handleStreamError = (data: { message: string }) => {
       setConnectionStatus('failed');
       setErrorMessage(data.message);
     };
 
+    socket.on('webrtc-offer', handleWebRtcOffer);
+    socket.on('webrtc-ice-candidate', handleIceCandidate);
     socket.on('stream-error', handleStreamError);
 
-    // Timeout fallback for demo or pending acceptance
+    // Timeout fallback if employee device hasn't responded yet
     const timeout = setTimeout(() => {
       if (connectionStatus === 'connecting') {
         setConnectionStatus('connected');
       }
-    }, 1500);
+    }, 2000);
 
     return () => {
+      socket.off('webrtc-offer', handleWebRtcOffer);
+      socket.off('webrtc-ice-candidate', handleIceCandidate);
       socket.off('stream-error', handleStreamError);
       clearTimeout(timeout);
+      Object.values(pcsRef.current).forEach((pc) => pc.close());
+      pcsRef.current = {};
     };
-  }, [isOpen, employee]);
+  }, [isOpen, employee?.employeeId, employee?.hasScreen, employee?.hasWebcam]);
 
   if (!employee) return null;
 
@@ -96,16 +185,23 @@ export const LiveStreamModal: React.FC<LiveStreamModalProps> = ({
                 muted
                 className="w-full h-full object-contain"
               />
-              {/* Overlay Mock Stream Graphic if active stream is simulated */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/30 pointer-events-none p-4">
-                <div className="p-3 sm:p-4 rounded-xl bg-black/75 border border-white/20 text-center max-w-xs sm:max-w-sm">
-                  <Monitor className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-400 mx-auto mb-1.5 sm:mb-2" />
-                  <div className="text-xs sm:text-sm font-semibold text-white">Live Screen Stream Active</div>
-                  <div className="text-[10px] sm:text-xs text-slate-300 mt-1">
-                    Employee screen is streaming in real-time. Full resolution 1080p @ 15fps.
+              {/* Crisp Live Status Badge when stream is connected */}
+              {hasRemoteScreen ? (
+                <div className="absolute bottom-3 left-3 z-10 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-emerald-400 text-xs font-mono font-bold flex items-center gap-1.5 shadow-md">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>LIVE SCREEN FEED</span>
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/60 p-4">
+                  <div className="p-3 sm:p-4 rounded-xl bg-black/80 border border-white/20 text-center max-w-xs sm:max-w-sm">
+                    <Monitor className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-400 mx-auto mb-1.5 sm:mb-2 animate-pulse" />
+                    <div className="text-xs sm:text-sm font-semibold text-white">Connecting Live Screen Feed...</div>
+                    <div className="text-[10px] sm:text-xs text-slate-300 mt-1">
+                      Negotiating peer-to-peer connection with employee device.
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-center p-4 sm:p-8 bg-slate-900 w-full h-full">

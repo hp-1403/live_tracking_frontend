@@ -77,7 +77,8 @@ export const useMediaStream = (onScreenShareStoppedByUser?: () => void): UseMedi
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
           frameRate: { ideal: 15, max: 24 },
-        } as MediaTrackConstraints,
+          cursor: 'always',
+        } as any,
         audio: false,
       });
 

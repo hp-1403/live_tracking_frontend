@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getSocket } from '../services/socket';
 
 interface UseIdleDetectorOptions {
   screenStream?: MediaStream | null;
@@ -109,13 +110,13 @@ export const useIdleDetector = ({
             let outsideTimerDiffCount = 0;
             let totalDiffCount = 0;
 
-            // Sample every 4th pixel (stride = 16 bytes: RGBA * 4)
-            for (let i = 0; i < currentData.length; i += 16) {
+            // Sample every 2nd pixel (stride = 8 bytes: RGBA * 2) for high-sensitivity cursor & key typing detection
+            for (let i = 0; i < currentData.length; i += 8) {
               const rDiff = Math.abs(currentData[i] - prevData[i]);
               const gDiff = Math.abs(currentData[i + 1] - prevData[i + 1]);
               const bDiff = Math.abs(currentData[i + 2] - prevData[i + 2]);
 
-              if (rDiff + gDiff + bDiff > 35) {
+              if (rDiff + gDiff + bDiff > 28) {
                 totalDiffCount++;
                 const pixelIndex = i / 4;
                 const x = pixelIndex % 320;
@@ -130,12 +131,9 @@ export const useIdleDetector = ({
               }
             }
 
-            // Real user activity in background tabs/windows:
-            // - Scrolling pages changes hundreds of pixels across the window (diffCount > 500)
-            // - Moving the cursor changes 30+ pixels
-            // - Typing changes 25+ pixels
-            // Whereas the ticking clock in the Work Shift Tracker is ignored!
-            if (outsideTimerDiffCount >= 14 || totalDiffCount >= 40) {
+            // Real user activity anywhere on the screen:
+            // - Any mouse move, cursor click, typing letter, text caret blink, or scroll outside timer area
+            if (outsideTimerDiffCount >= 3 || totalDiffCount >= 25) {
               handleUserActivity();
             }
           }
@@ -146,8 +144,8 @@ export const useIdleDetector = ({
       }
     };
 
-    // Sample every 400ms (2.5 times per second)
-    intervalId = setInterval(checkScreenMotion, 400);
+    // Sample every 250ms (4 times per second for instant responsiveness)
+    intervalId = setInterval(checkScreenMotion, 250);
 
     return () => {
       isDisposed = true;
@@ -256,12 +254,86 @@ export const useIdleDetector = ({
   }, [hasIdleDetectorPermission, requestIdleDetectorPermission]);
 
   // =========================================================================
-  // 3. LOCAL DOM LISTENERS & TICKER (Fast-path + Ticker Engine)
+  // 3. SYSTEM-WIDE LIVE KEYPAD AND MOUSE EVENT TRACKER (OS-Level via Socket)
+  // Connects to the local native backend to monitor hardware keypad and mouse
+  // activity across the ENTIRE macOS SYSTEM (all background tabs, windows, apps).
+  // When user types or moves mouse ANYWHERE in the system, idle timer resets to 0.
   // =========================================================================
   useEffect(() => {
-    const events = ['mousemove', 'keydown', 'scroll', 'mousedown', 'touchstart'];
-    events.forEach((evt) => window.addEventListener(evt, handleUserActivity, { passive: true }));
+    const socket = getSocket();
 
+    const handleSystemInput = () => {
+      handleUserActivity();
+    };
+
+    socket.on('system-input-activity', handleSystemInput);
+
+    return () => {
+      socket.off('system-input-activity', handleSystemInput);
+    };
+  }, [handleUserActivity]);
+
+  // =========================================================================
+  // 4. LOCAL LIVE KEYPAD AND MOUSE EVENT TRACKER (In-Tab Fast-Path)
+  // Real-time tracking of every keypad/keyboard keystroke and mouse event.
+  // Captures:
+  // - Keypad: keydown, keyup, keypress
+  // - Mouse: mousemove, mousedown, mouseup, click, dblclick, contextmenu, wheel,
+  //          pointerdown, pointermove, pointerup, scroll, touchstart, touchmove, touchend
+  // Uses capture phase on both window and document to guarantee no child
+  // component or input field can swallow the activity event.
+  // Whenever any keypad or mouse event occurs, the idle timer immediately resets to 0.
+  // =========================================================================
+  useEffect(() => {
+    const KEYPAD_EVENTS = ['keydown', 'keyup', 'keypress'] as const;
+    const MOUSE_EVENTS = [
+      'mousemove',
+      'mousedown',
+      'mouseup',
+      'click',
+      'dblclick',
+      'contextmenu',
+      'wheel',
+      'pointerdown',
+      'pointermove',
+      'pointerup',
+      'scroll',
+      'touchstart',
+      'touchmove',
+      'touchend',
+    ] as const;
+
+    const allInputEvents = [...KEYPAD_EVENTS, ...MOUSE_EVENTS];
+    const targets = [window, document];
+
+    const handleLiveInputEvent = () => {
+      handleUserActivity();
+    };
+
+    targets.forEach((target) => {
+      allInputEvents.forEach((evt) => {
+        target.addEventListener(evt, handleLiveInputEvent, {
+          capture: true,
+          passive: true,
+        });
+      });
+    });
+
+    return () => {
+      targets.forEach((target) => {
+        allInputEvents.forEach((evt) => {
+          target.removeEventListener(evt, handleLiveInputEvent, {
+            capture: true,
+          } as any);
+        });
+      });
+    };
+  }, [handleUserActivity]);
+
+  // =========================================================================
+  // 4. TICKER & TIMEOUT ENGINE (1-second tick & heartbeat)
+  // =========================================================================
+  useEffect(() => {
     const handleVisibilityChange = () => {
       const active = !document.hidden;
       isTabActiveRef.current = active;
@@ -301,17 +373,17 @@ export const useIdleDetector = ({
     // Heartbeat ticker
     const heartbeatTicker = setInterval(() => {
       if (onHeartbeat) {
-        onHeartbeat(isIdleRef.current ? 'idle' : 'active', idleSeconds);
+        const currentIdleSecs = Math.floor((Date.now() - lastActivityTimestamp.current) / 1000);
+        onHeartbeat(isIdleRef.current ? 'idle' : 'active', currentIdleSecs);
       }
     }, heartbeatIntervalSeconds * 1000);
 
     return () => {
-      events.forEach((evt) => window.removeEventListener(evt, handleUserActivity));
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(ticker);
       clearInterval(heartbeatTicker);
     };
-  }, [handleUserActivity, idleTimeoutSeconds, heartbeatIntervalSeconds, onIdleStateChange, onInactivityPause, onHeartbeat, idleSeconds]);
+  }, [idleTimeoutSeconds, heartbeatIntervalSeconds, onIdleStateChange, onInactivityPause, onHeartbeat]);
 
   return {
     isIdle,
