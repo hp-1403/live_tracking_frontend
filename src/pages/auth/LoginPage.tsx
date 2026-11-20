@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { InputField } from '../../components/common/InputField';
 import { loginSchema, LoginFormData } from '../../schemas/authSchemas';
@@ -16,14 +17,16 @@ import {
   Users,
   Lock,
   Sparkles,
+  AlertCircle,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // React Hook Form for Login
+  // React Hook Form for Login with Yup Resolver
   const {
     register: registerLogin,
     handleSubmit: handleLoginSubmit,
@@ -42,35 +45,30 @@ export const LoginPage: React.FC = () => {
     setServerError(null);
     setIsLoading(true);
     try {
-      await login({
+      const loggedInUser = await login({
         employeeId: data.employeeId,
         name: data.name,
       });
+      toast.success(`Welcome back, ${data.name}!`);
+      if (loggedInUser.role === 'manager') {
+        navigate('/manager', { replace: true });
+      } else {
+        navigate('/employee', { replace: true });
+      }
     } catch (err: any) {
-      setServerError(err.message || 'Login failed. Please verify your credentials.');
+      const errorMsg = err.message || 'Login failed. Please verify your credentials.';
+      setServerError(errorMsg);
+      toast.error(errorMsg, { id: errorMsg });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Quick One-Click Demo Logins
-  const handleQuickDemoLogin = async (demoRole: 'manager' | 'employee') => {
-    setServerError(null);
-    setIsLoading(true);
-    const credentials =
-      demoRole === 'manager'
-        ? { employeeId: 'EMP0001', name: 'Alex Rivera' }
-        : { employeeId: 'EMP0002', name: 'Sarah Chen' };
-
-    setLoginValue('employeeId', credentials.employeeId);
-    setLoginValue('name', credentials.name);
-
-    try {
-      await login(credentials);
-    } catch (err: any) {
-      setServerError(err.message || 'Quick login failed');
-    } finally {
-      setIsLoading(false);
+  // Triggered when client-side Yup validation fails
+  const onLoginInvalid = (errors: any) => {
+    const firstError = Object.values(errors)[0] as any;
+    if (firstError?.message) {
+      toast.error(firstError.message, { id: firstError.message });
     }
   };
 
@@ -173,13 +171,14 @@ export const LoginPage: React.FC = () => {
 
             {/* Error Message */}
             {serverError && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-50/90 backdrop-blur-sm border border-rose-200 text-rose-800 text-xs font-medium">
-                {serverError}
+              <div className="mb-4 p-3 sm:p-3.5 rounded-xl bg-rose-50/95 backdrop-blur-sm border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-xs animate-fadeIn">
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                <span>{serverError}</span>
               </div>
             )}
 
             {/* SIGN IN FORM */}
-            <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-4" noValidate>
+            <form onSubmit={handleLoginSubmit(onLoginSubmit, onLoginInvalid)} className="space-y-4" noValidate>
               <InputField
                 label="Employee ID"
                 type="text"

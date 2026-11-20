@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useUsersQuery } from '../../hooks/queries/useActivityQueries';
 import { useQueryClient } from '@tanstack/react-query';
@@ -75,12 +76,22 @@ export const RegisterPage: React.FC = () => {
         name: data.fullName,
         role: (data.role as 'employee' | 'manager') || 'employee',
       });
+      toast.success(`Member registered successfully with ID: ${result.employeeId}`);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       refetchUsers();
     } catch (err: any) {
-      setServerError(err.message || 'Registration failed. Please try again.');
+      const errorMsg = err.message || 'Registration failed. Please try again.';
+      setServerError(errorMsg);
+      toast.error(errorMsg, { id: errorMsg });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const onRegisterInvalid = (errors: any) => {
+    const firstError = Object.values(errors)[0] as any;
+    if (firstError?.message) {
+      toast.error(firstError.message, { id: firstError.message });
     }
   };
 
@@ -89,6 +100,7 @@ export const RegisterPage: React.FC = () => {
     if (targetId) {
       navigator.clipboard.writeText(targetId);
       setCopied(true);
+      toast.success('Employee ID copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -237,7 +249,7 @@ export const RegisterPage: React.FC = () => {
                     )}
 
                     {/* REGISTRATION FORM */}
-                    <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-4 sm:space-y-5" noValidate>
+                    <form onSubmit={handleRegisterSubmit(onRegisterSubmit, onRegisterInvalid)} className="space-y-4 sm:space-y-5" noValidate>
                       {/* Role Selector: Employee OR Admin */}
                       <div>
                         <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">

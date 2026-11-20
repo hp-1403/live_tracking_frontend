@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useUsersQuery } from '../../hooks/queries/useActivityQueries';
 import { useQueryClient } from '@tanstack/react-query';
@@ -102,19 +103,30 @@ export const RegisterMemberModal: React.FC<RegisterMemberModalProps> = ({
         role: (data.role as 'employee' | 'manager') || 'employee',
       });
 
+      toast.success(`Member registered successfully with ID: ${result.employeeId}`);
       // Invalidate users directory so it updates immediately
       queryClient.invalidateQueries({ queryKey: ['users'] });
       refetchUsers();
     } catch (err: any) {
-      setServerError(err.message || 'Registration failed. Please try again.');
+      const errorMsg = err.message || 'Registration failed. Please try again.';
+      setServerError(errorMsg);
+      toast.error(errorMsg, { id: errorMsg });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const onRegisterInvalid = (errors: any) => {
+    const firstError = Object.values(errors)[0] as any;
+    if (firstError?.message) {
+      toast.error(firstError.message, { id: firstError.message });
     }
   };
 
   const handleCopy = (id: string) => {
     navigator.clipboard.writeText(id);
     setCopiedId(id);
+    toast.success('Employee ID copied to clipboard!');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -229,7 +241,7 @@ export const RegisterMemberModal: React.FC<RegisterMemberModalProps> = ({
         {activeTab === 'register' && (
           <div>
             {!registeredEmployee ? (
-              <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-4" noValidate>
+              <form onSubmit={handleRegisterSubmit(onRegisterSubmit, onRegisterInvalid)} className="space-y-4" noValidate>
                 {/* Next Allocated ID Indicator */}
                 {nextEmployeeId && (
                   <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-50/80 border border-indigo-100 text-xs sm:text-sm">

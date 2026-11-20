@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
 import { queryClient } from './lib/queryClient';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
@@ -57,6 +58,41 @@ export function App() {
       <AuthProvider>
         <BrowserRouter>
           <AppRoutes />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4500,
+              style: {
+                background: '#ffffff',
+                color: '#0f172a',
+                boxShadow: '0 12px 32px -4px rgba(15, 23, 42, 0.18)',
+                borderRadius: '14px',
+                border: '1px solid rgba(226, 232, 240, 0.9)',
+                padding: '12px 18px',
+                fontSize: '13.5px',
+                fontWeight: '600',
+                maxWidth: '420px',
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#ffffff',
+                },
+                style: {
+                  borderLeft: '4px solid #ef4444',
+                },
+              },
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#ffffff',
+                },
+                style: {
+                  borderLeft: '4px solid #10b981',
+                },
+              },
+            }}
+          />
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>

@@ -46,6 +46,144 @@ export const EmployeeDashboard: React.FC = () => {
     toggleWebcamMute,
   } = useMediaStream(handleScreenStoppedByUser);
 
+  // WebRTC Stream Broadcaster to Manager(s)
+  useEffect(() => {
+    if (!user) return;
+    const socket = getSocket();
+    const peerConnections: Record<string, RTCPeerConnection> = {};
+
+    const handleManagerRequest = async ({ managerSocketId }: { managerSocketId: string }) => {
+      console.log(`[WebRTC] Manager ${managerSocketId} requested stream. Screen active: ${!!screenStream}, Webcam active: ${!!webcamStream}`);
+
+      // 1. Send Screen stream if active
+      if (screenStream && screenStream.getVideoTracks().length > 0) {
+        try {
+          const pcKey = `screen_${managerSocketId}`;
+          if (peerConnections[pcKey]) {
+            peerConnections[pcKey].close();
+          }
+          const pc = new RTCPeerConnection({
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+            ],
+          });
+          peerConnections[pcKey] = pc;
+
+          screenStream.getTracks().forEach((track) => {
+            pc.addTrack(track, screenStream);
+          });
+
+          pc.onicecandidate = (event) => {
+            if (event.candidate) {
+              socket.emit('webrtc-ice-candidate', {
+                targetSocketId: managerSocketId,
+                candidate: event.candidate,
+                streamType: 'screen',
+              });
+            }
+          };
+
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          socket.emit('webrtc-offer', {
+            targetSocketId: managerSocketId,
+            sdp: offer,
+            streamType: 'screen',
+          });
+        } catch (err) {
+          console.error('[WebRTC] Error initiating screen offer:', err);
+        }
+      }
+
+      // 2. Send Webcam stream if active
+      if (webcamStream && webcamStream.getVideoTracks().length > 0) {
+        try {
+          const pcKey = `webcam_${managerSocketId}`;
+          if (peerConnections[pcKey]) {
+            peerConnections[pcKey].close();
+          }
+          const pc = new RTCPeerConnection({
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+            ],
+          });
+          peerConnections[pcKey] = pc;
+
+          webcamStream.getTracks().forEach((track) => {
+            pc.addTrack(track, webcamStream);
+          });
+
+          pc.onicecandidate = (event) => {
+            if (event.candidate) {
+              socket.emit('webrtc-ice-candidate', {
+                targetSocketId: managerSocketId,
+                candidate: event.candidate,
+                streamType: 'webcam',
+              });
+            }
+          };
+
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          socket.emit('webrtc-offer', {
+            targetSocketId: managerSocketId,
+            sdp: offer,
+            streamType: 'webcam',
+          });
+        } catch (err) {
+          console.error('[WebRTC] Error initiating webcam offer:', err);
+        }
+      }
+    };
+
+    const handleWebRtcAnswer = async (data: {
+      senderSocketId: string;
+      sdp: any;
+      streamType: 'screen' | 'webcam';
+    }) => {
+      const pcKey = `${data.streamType}_${data.senderSocketId}`;
+      const pc = peerConnections[pcKey];
+      if (pc) {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        } catch (err) {
+          console.error(`[WebRTC] Error setting remote description for ${pcKey}:`, err);
+        }
+      }
+    };
+
+    const handleIceCandidate = async (data: {
+      senderSocketId: string;
+      candidate: any;
+      streamType: 'screen' | 'webcam';
+    }) => {
+      const pcKey = `${data.streamType}_${data.senderSocketId}`;
+      const pc = peerConnections[pcKey];
+      if (pc && data.candidate) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (err) {
+          console.warn(`[WebRTC] Error adding ICE candidate:`, err);
+        }
+      }
+    };
+
+    socket.on('manager-requesting-feed', handleManagerRequest);
+    socket.on('webrtc-answer', handleWebRtcAnswer);
+    socket.on('webrtc-ice-candidate', handleIceCandidate);
+
+    return () => {
+      socket.off('manager-requesting-feed', handleManagerRequest);
+      socket.off('webrtc-answer', handleWebRtcAnswer);
+      socket.off('webrtc-ice-candidate', handleIceCandidate);
+      Object.values(peerConnections).forEach((pc) => pc.close());
+    };
+  }, [user, screenStream, webcamStream]);
+
   // 4. Socket Registration and Heartbeats
   useEffect(() => {
     if (!user) return;
