@@ -4,7 +4,8 @@ let socketInstance: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socketInstance) {
-    socketInstance = io(window.location.origin, {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    socketInstance = io(backendUrl, {
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 15,

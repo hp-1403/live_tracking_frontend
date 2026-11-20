@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const getAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
@@ -83,7 +83,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
       networkError?.message === 'Failed to fetch'
         ? 'Cannot connect to server. Please check your network or server status.'
         : networkError?.message || 'Network error occurred.';
-    
+
     if (!options.silent) {
       toast.error(errorMsg, { id: errorMsg });
     }
