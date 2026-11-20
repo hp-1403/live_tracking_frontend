@@ -1,25 +1,28 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
 import { queryClient } from './lib/queryClient';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
+import { RegisterPage } from './pages/auth/RegisterPage';
 import { EmployeeDashboard } from './pages/employee/EmployeeDashboard';
 import { ManagerDashboard } from './pages/manager/ManagerDashboard';
 
 const AppRoutes: React.FC = () => {
-  const { user, isLoading, isManager, isEmployee } = useAuth();
+  const { user, isLoading, isManager } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-3">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs tracking-wider uppercase font-mono">Initializing LiveTracker...</span>
+      <div className="min-h-screen w-full bg-slate-50 flex flex-col items-center justify-center text-slate-600 gap-3 p-4">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 sm:border-[3px] border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs sm:text-sm 2xl:text-base tracking-wider uppercase font-mono text-slate-500 font-semibold text-center">Initializing LiveTracker...</span>
       </div>
     );
   }
 
-  // Not authenticated -> show login page
+  // Not authenticated -> only /login is accessible.
+  // If someone tries to write /register or any other URL, redirect to /login!
   if (!user) {
     return (
       <Routes>
@@ -30,11 +33,13 @@ const AppRoutes: React.FC = () => {
   }
 
   // Authenticated routing by role
+  // ONLY Admin (isManager) has access to /register after logging in!
   return (
     <Routes>
       {isManager ? (
         <>
           <Route path="/manager" element={<ManagerDashboard />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/manager" replace />} />
         </>
       ) : (
@@ -53,6 +58,41 @@ export function App() {
       <AuthProvider>
         <BrowserRouter>
           <AppRoutes />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4500,
+              style: {
+                background: '#ffffff',
+                color: '#0f172a',
+                boxShadow: '0 12px 32px -4px rgba(15, 23, 42, 0.18)',
+                borderRadius: '14px',
+                border: '1px solid rgba(226, 232, 240, 0.9)',
+                padding: '12px 18px',
+                fontSize: '13.5px',
+                fontWeight: '600',
+                maxWidth: '420px',
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#ffffff',
+                },
+                style: {
+                  borderLeft: '4px solid #ef4444',
+                },
+              },
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#ffffff',
+                },
+                style: {
+                  borderLeft: '4px solid #10b981',
+                },
+              },
+            }}
+          />
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>

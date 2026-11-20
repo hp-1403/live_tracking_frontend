@@ -1,18 +1,86 @@
-const API_BASE_URL = '/api';
+import toast from 'react-hot-toast';
+
+const getApiBaseUrl = (): string => {
+  let url = (import.meta.env.VITE_API_URL || '').trim();
+  if (!url) {
+    const backend = (import.meta.env.VITE_BACKEND_URL || '').trim();
+    if (backend) {
+      url = `${backend.replace(/\/+$/, '')}/api`;
+    } else {
+      return '/api';
+    }
+  }
+  // Strip trailing slashes
+  url = url.replace(/\/+$/, '');
+  // If the URL doesn't end with /api, append it safely
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
+  }
+  return url;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const getAuthToken = (): string | null => {
-  return localStorage.getItem('token');
+  if (typeof window === 'undefined') return null;
+  const path = window.location.pathname;
+  if (path.startsWith('/manager') || path.startsWith('/register')) {
+    return (
+      sessionStorage.getItem('token_manager') ||
+      sessionStorage.getItem('token') ||
+      localStorage.getItem('token_manager') ||
+      null
+    );
+  }
+  if (path.startsWith('/employee')) {
+    return (
+      sessionStorage.getItem('token_employee') ||
+      sessionStorage.getItem('token') ||
+      localStorage.getItem('token_employee') ||
+      null
+    );
+  }
+  // For any other path (e.g. /login), strictly isolate to this tab's sessionStorage
+  return sessionStorage.getItem('token') || null;
 };
 
-export const setAuthToken = (token: string): void => {
-  localStorage.setItem('token', token);
+export const setAuthToken = (token: string, role?: string): void => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem('token', token);
+  if (role === 'manager') {
+    sessionStorage.setItem('token_manager', token);
+    localStorage.setItem('token_manager', token);
+  } else if (role === 'employee') {
+    sessionStorage.setItem('token_employee', token);
+    localStorage.setItem('token_employee', token);
+  }
 };
 
-export const clearAuthToken = (): void => {
-  localStorage.removeItem('token');
+export const clearAuthToken = (role?: string): void => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
+  if (role === 'manager') {
+    sessionStorage.removeItem('token_manager');
+    sessionStorage.removeItem('user_manager');
+    localStorage.removeItem('token_manager');
+    localStorage.removeItem('user_manager');
+  } else if (role === 'employee') {
+    sessionStorage.removeItem('token_employee');
+    sessionStorage.removeItem('user_employee');
+    localStorage.removeItem('token_employee');
+    localStorage.removeItem('user_employee');
+  } else {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
 };
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export interface RequestOptions extends RequestInit {
+  silent?: boolean;
+}
+
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const token = getAuthToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -23,15 +91,48 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (networkError: any) {
+    const errorMsg =
+      networkError?.message === 'Failed to fetch'
+        ? 'Cannot connect to server. Please check your network or server status.'
+        : networkError?.message || 'Network error occurred.';
+
+    if (!options.silent) {
+      toast.error(errorMsg, { id: errorMsg });
+    }
+    throw new Error(errorMsg);
+  }
 
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || `Request failed with status ${response.status}`);
+    const errorMsg =
+      data.message ||
+      data.error ||
+      (Array.isArray(data.errors) ? data.errors.map((e: any) => e.message || e).join(', ') : null) ||
+      `Request failed with status ${response.status}`;
+
+    // Automatically trigger error hot toast for any failed API across the whole project
+    if (!options.silent) {
+      toast.error(errorMsg, { id: errorMsg });
+    }
+
+    const err = new Error(errorMsg);
+    (err as any).data = data;
+    (err as any).status = response.status;
+    throw err;
+  }
+
+  // Automatically trigger success hot toast when the API responds with a success message
+  if (!options.silent && data && typeof data === 'object' && (data as any).message) {
+    const msg = (data as any).message;
+    toast.success(msg, { id: msg });
   }
 
   return data as T;
@@ -39,17 +140,45 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const api = {
   // Auth
-  login: (credentials: { email: string; password: string }) =>
-    request<{ user: any; token: string }>('/auth/login', {
+  login: (credentials: { employeeId: string; name: string }) =>
+    request<{ success: boolean; user: any; token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     }),
 
-  register: (payload: { fullName: string; email: string; password: string; role: 'employee' | 'manager' }) =>
-    request<{ user: any; token: string }>('/auth/register', {
+  register: (payload: { fullName: string; role?: string; email?: string }) =>
+    request<{
+      success: boolean;
+      employee?: { employeeId: string; name: string };
+      user: any;
+      token: string;
+    }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  logout: (payload?: { userId?: string; employeeId?: string }) =>
+    request<{ success: boolean }>('/auth/logout', {
+      method: 'POST',
+      body: payload ? JSON.stringify(payload) : undefined,
+    }).catch(() => ({ success: true })),
+
+  getAuditLogs: () => request<{ logs: any[] }>('/auth/audit-logs'),
+
+  getUsers: () =>
+    request<{
+      success: boolean;
+      users: Array<{
+        id: string;
+        employeeId: string;
+        fullName: string;
+        email?: string;
+        role: string;
+        avatarUrl?: string;
+        createdAt?: string;
+      }>;
+      nextEmployeeId: string;
+    }>('/auth/users'),
 
   getMe: () => request<{ user: any }>('/auth/me'),
 
@@ -59,10 +188,10 @@ export const api = {
       method: 'POST',
     }),
 
-  updateShiftStatus: (id: string, status: 'active' | 'paused' | 'completed', idleSecondsDelta = 0) =>
+  updateShiftStatus: (id: string, status: 'active' | 'paused' | 'completed', idleSecondsDelta = 0, reason?: string) =>
     request<{ shift: any }>(`/shifts/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status, idleSecondsDelta }),
+      body: JSON.stringify({ status, idleSecondsDelta, reason }),
     }),
 
   getMyActiveShift: () => request<{ shift: any | null }>('/shifts/my-active'),

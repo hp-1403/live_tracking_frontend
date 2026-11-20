@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '../common/Card';
 import { Users, Video, Clock, AlertTriangle } from 'lucide-react';
 import { LiveEmployeeData, Shift } from '../../types';
 
@@ -21,49 +20,49 @@ export const ActivityStatsOverview: React.FC<ActivityStatsOverviewProps> = ({
       title: 'Active Employees',
       value: activeCount,
       total: `${liveEmployees.length} Connected`,
-      icon: <Users className="w-5 h-5 text-emerald-400" />,
-      color: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/20',
+      icon: <Users className="w-5 h-5 text-emerald-600" />,
+      color: 'bg-emerald-50/50 border-emerald-100',
     },
     {
       title: 'Live Streams Running',
       value: streamingCount,
       total: 'Screen & Webcam',
-      icon: <Video className="w-5 h-5 text-indigo-400" />,
-      color: 'from-indigo-500/20 to-indigo-500/5 border-indigo-500/20',
+      icon: <Video className="w-5 h-5 text-indigo-600" />,
+      color: 'bg-indigo-50/50 border-indigo-100',
     },
     {
       title: 'Idle / Inactive',
       value: idleCount,
       total: 'Away > 2 mins',
-      icon: <AlertTriangle className="w-5 h-5 text-amber-400" />,
-      color: 'from-amber-500/20 to-amber-500/5 border-amber-500/20',
+      icon: <AlertTriangle className="w-5 h-5 text-amber-600" />,
+      color: 'bg-amber-50/50 border-amber-100',
     },
     {
       title: 'Active Shifts',
       value: activeShifts.length,
       total: 'In Progress',
-      icon: <Clock className="w-5 h-5 text-blue-400" />,
-      color: 'from-blue-500/20 to-blue-500/5 border-blue-500/20',
+      icon: <Clock className="w-5 h-5 text-indigo-600" />,
+      color: 'bg-indigo-50/70 border-indigo-100',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5 2xl:gap-6 mb-6 sm:mb-8">
       {stats.map((stat, idx) => (
         <div
           key={idx}
-          className={`p-5 rounded-2xl bg-gradient-to-br ${stat.color} border backdrop-blur-md glass-panel flex items-center justify-between`}
+          className={`min-w-0 p-3 sm:p-5 2xl:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-card hover:shadow-card-hover hover:border-slate-300 flex items-center justify-between gap-2 transition-all duration-200`}
         >
           <div>
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
+            <div className="text-[9px] sm:text-xs 2xl:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1 leading-tight">
               {stat.title}
             </div>
-            <div className="text-3xl font-extrabold text-slate-100 font-mono">
+            <div className="text-2xl sm:text-3xl 2xl:text-4xl font-extrabold text-slate-900 font-mono">
               {stat.value}
             </div>
-            <div className="text-xs text-slate-400 mt-1">{stat.total}</div>
+            <div className="text-[10px] sm:text-xs 2xl:text-sm text-slate-500 mt-1 font-medium leading-tight">{stat.total}</div>
           </div>
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
+          <div className={`hidden sm:block p-2.5 sm:p-3 2xl:p-3.5 rounded-xl border ${stat.color}`}>
             {stat.icon}
           </div>
         </div>

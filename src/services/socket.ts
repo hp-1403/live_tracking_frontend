@@ -2,9 +2,23 @@ import { io, Socket } from 'socket.io-client';
 
 let socketInstance: Socket | null = null;
 
+const getSocketUrl = (): string => {
+  const backend = (import.meta.env.VITE_BACKEND_URL || '').trim();
+  if (backend) return backend.replace(/\/+$/, '');
+
+  const api = (import.meta.env.VITE_API_URL || '').trim();
+  if (api) {
+    // Strip trailing /api or /api/
+    return api.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+  }
+
+  return typeof window !== 'undefined' ? window.location.origin : '';
+};
+
 export const getSocket = (): Socket => {
   if (!socketInstance) {
-    socketInstance = io(window.location.origin, {
+    const backendUrl = getSocketUrl();
+    socketInstance = io(backendUrl, {
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 15,
