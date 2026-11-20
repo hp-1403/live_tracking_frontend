@@ -1,6 +1,25 @@
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const getApiBaseUrl = (): string => {
+  let url = (import.meta.env.VITE_API_URL || '').trim();
+  if (!url) {
+    const backend = (import.meta.env.VITE_BACKEND_URL || '').trim();
+    if (backend) {
+      url = `${backend.replace(/\/+$/, '')}/api`;
+    } else {
+      return '/api';
+    }
+  }
+  // Strip trailing slashes
+  url = url.replace(/\/+$/, '');
+  // If the URL doesn't end with /api, append it safely
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
+  }
+  return url;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const getAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
